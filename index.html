@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Evals — interactive notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAEFF2;--paper:#F8FAFB;--ink:#17233B;--muted:#56637A;--line:#C6D0D9;--soft:#DCE5EB;
+  --pass:#0E7478;--fail:#BF3E2A;--flag:#9E6C06;--accent:#2B4C9B;--accent-soft:#DEE5F6;
+  --pass-soft:#D6ECEC;--fail-soft:#F6DDD8;--flag-soft:#F4E8CC;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1420;--paper:#141E2F;--ink:#E3E9F2;--muted:#98A4B8;--line:#2A3850;--soft:#1B283D;
+  --pass:#43B8B2;--fail:#EF6D57;--flag:#E2B04A;--accent:#93ABF2;--accent-soft:#1F2C4D;
+  --pass-soft:#14323A;--fail-soft:#3A1F1C;--flag-soft:#372C14;}}
+:root[data-theme="dark"]{
+  --bg:#0D1420;--paper:#141E2F;--ink:#E3E9F2;--muted:#98A4B8;--line:#2A3850;--soft:#1B283D;
+  --pass:#43B8B2;--fail:#EF6D57;--flag:#E2B04A;--accent:#93ABF2;--accent-soft:#1F2C4D;
+  --pass-soft:#14323A;--fail-soft:#3A1F1C;--flag-soft:#372C14;}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 16px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;
+  background-image:linear-gradient(var(--soft) 1px,transparent 1px),linear-gradient(90deg,var(--soft) 1px,transparent 1px);
+  background-size:28px 28px;background-attachment:fixed}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--mono);font-size:.88em}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100vh}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--paper);border-right:1px solid var(--line);padding:22px 16px 40px}
+.brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em;margin:0 0 4px}
+.brand-sub{color:var(--muted);font-size:.85rem;margin:0 0 14px}
+.progress{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.progress i{display:block;height:100%;background:var(--pass);width:0;transition:width .4s}
+.progress-label{font-size:.8rem;color:var(--muted);margin-bottom:14px}
+nav.side ol{list-style:none;padding:0;margin:0}
+nav.side a{display:flex;gap:8px;align-items:baseline;text-decoration:none;color:var(--ink);padding:5px 8px;border-radius:6px;font-size:.9rem;line-height:1.35}
+nav.side a:hover{background:var(--soft)}
+nav.side a.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav.side a .n{color:var(--muted);font-variant-numeric:tabular-nums;min-width:1.6em;font-size:.8rem}
+nav.side a .ck{margin-left:auto;color:var(--pass);font-weight:700}
+.side-tools{display:flex;gap:8px;margin:14px 0}
+.menu-btn{display:none}
+main{padding:0 clamp(16px,4vw,56px) 120px;max-width:900px}
+section.part{padding-top:56px}
+.part-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:20px}
+.part-num{font-family:var(--mono);color:var(--muted);font-size:.9rem;white-space:nowrap}
+h2{font-size:clamp(1.6rem,3vw,2.1rem);line-height:1.15;margin:0;letter-spacing:-.02em}
+h3{font-size:1.2rem;margin:34px 0 8px;letter-spacing:-.01em}
+h4{margin:18px 0 6px;font-size:1rem}
+p,li{max-width:70ch}
+.lede{font-size:1.08rem;color:var(--muted)}
+.def{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:4px 10px 10px 4px;padding:12px 16px;margin:14px 0}
+.def b.t{display:block;font-size:.82rem;color:var(--accent);margin-bottom:2px}
+.def p{margin:0}
+.rule{background:var(--ink);color:var(--paper);border-radius:10px;padding:14px 18px;margin:16px 0;font-weight:600;font-size:1.05rem}
+.rule small{display:block;font-weight:400;opacity:.8;font-size:.85rem;margin-top:4px}
+.iv{border:1px dashed var(--flag);background:var(--flag-soft);border-radius:10px;padding:10px 14px;margin:14px 0;font-size:.95rem}
+.iv b.t{color:var(--flag)}
+.added{display:inline-block;font-size:.72rem;font-weight:700;background:var(--pass-soft);color:var(--pass);border:1px solid var(--pass);border-radius:999px;padding:0 8px;vertical-align:middle;margin-left:6px}
+.fixed{display:inline-block;font-size:.72rem;font-weight:700;background:var(--fail-soft);color:var(--fail);border:1px solid var(--fail);border-radius:999px;padding:0 8px;vertical-align:middle;margin-left:6px}
+.widget{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:18px 0;box-shadow:0 1px 0 var(--line)}
+.widget>.wt{font-weight:700;margin:0 0 4px}
+.widget>.wd{color:var(--muted);font-size:.9rem;margin:0 0 12px}
+.btn{border:1px solid var(--ink);background:var(--paper);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.9rem;font-weight:600}
+.btn:hover{background:var(--soft)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.primary:hover{opacity:.9}
+.btn.sm{padding:3px 9px;font-size:.82rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:.88rem}
+.chip[aria-pressed="true"],.chip.on{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0}
+.flow .node{border:1.5px solid var(--ink);border-radius:8px;padding:6px 11px;background:var(--paper);cursor:pointer;font-weight:600;font-size:.9rem}
+.flow .node.on{background:var(--ink);color:var(--paper)}
+.flow .node.bad{border-color:var(--fail);color:var(--fail)}
+.flow .node.good{border-color:var(--pass);color:var(--pass)}
+.flow .arr{color:var(--muted)}
+.flow.vertical{flex-direction:column;align-items:flex-start}
+.panel{background:var(--bg);border-radius:10px;padding:12px 14px;margin-top:10px;min-height:2.6em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--paper)}
+.card h4{margin:0 0 4px}
+.dots{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;min-height:18px}
+.dot{width:14px;height:14px;border-radius:50%}
+.dot.p{background:var(--pass)}.dot.f{background:var(--fail)}
+.stat{font-family:var(--mono);font-size:.95rem}
+.big{font-size:1.9rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.pass{color:var(--pass)}.fail{color:var(--fail)}.flag{color:var(--flag)}
+label.sl{display:flex;flex-direction:column;gap:2px;font-size:.88rem;color:var(--muted);min-width:180px;flex:1}
+input[type=range]{width:100%;accent-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+.tw{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);text-align:left;padding:6px 8px;vertical-align:top}
+th{font-weight:700}
+.bar{height:14px;border-radius:3px;background:var(--accent)}
+.hero{padding-top:44px}
+.hero h1{font-size:clamp(2.2rem,6vw,3.8rem);line-height:1.02;letter-spacing:-.035em;margin:0 0 12px;max-width:14ch}
+.hero .lede{max-width:56ch}
+.case-card{font-family:var(--mono);font-size:.85rem;background:var(--bg);border-radius:10px;padding:12px 14px;white-space:pre-wrap;line-height:1.55}
+.case-card .k{color:var(--accent);font-weight:600}
+.case-card .hide{opacity:.15}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding-left:2.2em;margin:6px 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:1.6em;height:1.6em;border-radius:50%;background:var(--ink);color:var(--paper);font-size:.8rem;display:grid;place-items:center;font-weight:700}
+.dbg-step{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.dbg-step .q{flex:1}
+.tag{font-family:var(--mono);font-size:.78rem;font-weight:600;padding:1px 7px;border-radius:5px}
+.tag.y{background:var(--pass-soft);color:var(--pass)}.tag.n{background:var(--fail-soft);color:var(--fail)}.tag.u{background:var(--soft);color:var(--muted)}
+.fc{perspective:1000px;cursor:pointer;max-width:560px}
+.fc-inner{position:relative;min-height:190px;transition:transform .5s;transform-style:preserve-3d}
+.fc.flip .fc-inner{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;border:1.5px solid var(--ink);border-radius:14px;background:var(--paper);padding:20px;display:flex;flex-direction:column;justify-content:center}
+.fc-back{transform:rotateY(180deg);background:var(--accent-soft)}
+.fc-face .term{font-size:1.5rem;font-weight:700;letter-spacing:-.02em}
+.qopt{display:block;width:100%;text-align:left;margin:6px 0;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 12px;cursor:pointer}
+.qopt.right{border-color:var(--pass);background:var(--pass-soft)}
+.qopt.wrong{border-color:var(--fail);background:var(--fail-soft)}
+.gl-item{border-bottom:1px solid var(--line);padding:8px 0}
+.gl-item b{display:block}
+input.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.done-btn{margin-top:26px}
+.done-btn[aria-pressed="true"]{background:var(--pass);border-color:var(--pass);color:#fff}
+svg text{font-family:var(--sans)}
+.prompt-box{font-family:var(--mono);font-size:.78rem;background:var(--bg);border-radius:8px;padding:10px;max-height:190px;overflow:auto;white-space:pre-wrap}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bin{border:1.5px dashed var(--line);border-radius:10px;padding:8px;min-height:70px}
+.bin h5{margin:0 0 6px;font-size:.85rem}
+.pill{display:inline-block;padding:2px 8px;border-radius:6px;margin:2px;font-size:.8rem;font-weight:600;color:#fff}
+.doc{display:flex;gap:8px;align-items:center;padding:5px 8px;border:1px solid var(--line);border-radius:8px;margin:4px 0;cursor:pointer;background:var(--paper)}
+.doc.rel{border-color:var(--pass);background:var(--pass-soft)}
+.doc.cut{opacity:.4}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  nav.side{position:fixed;top:0;left:0;bottom:0;width:min(300px,85vw);z-index:20;transform:translateX(-105%);transition:transform .25s;padding-top:calc(env(safe-area-inset-top,0px) + 22px);height:100%}
+  nav.side.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+  .menu-btn{display:inline-flex;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);right:16px;z-index:21}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" id="side" aria-label="Chapters">
+  <p class="brand">AI Evals</p>
+  <p class="brand-sub">Interactive notes, vibes to evidence</p>
+  <div class="progress"><i id="progBar"></i></div>
+  <div class="progress-label" id="progLabel">0 of 0 chapters understood</div>
+  <div class="side-tools">
+    <button class="btn sm" id="themeBtn" type="button">Toggle theme</button>
+    <button class="btn sm" id="resetBtn" type="button">Reset progress</button>
+  </div>
+  <ol id="navList"></ol>
+</nav>
+<button class="btn primary menu-btn" id="menuBtn" type="button" aria-controls="side" aria-expanded="false">Chapters</button>
+
+<main id="main">
+
+<!-- HERO -->
+<section class="part hero" id="start" data-title="Start here" data-n="">
+  <h1>AI evals: turning behavior into evidence</h1>
+  <p class="lede">You changed the prompt, tested 10 examples, everything looked better, and you shipped. Then the agent started doing the wrong thing. Run the experiment below to feel why ten good-looking outputs prove very little.</p>
+  <div class="widget" id="w-hero">
+    <p class="wt">One output is one sample from a distribution</p>
+    <p class="wd">Set your system's true pass rate (which you never get to see in real life), then run trials.</p>
+    <div class="row">
+      <label class="sl">True pass rate: <b id="hp-v">85%</b><input type="range" id="hp" min="50" max="99" value="85"></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-n="1" type="button">Run 1 trial</button>
+      <button class="btn" data-n="10" type="button">Run 10</button>
+      <button class="btn primary" data-n="100" type="button">Run 100</button>
+      <button class="btn sm" id="hclear" type="button">Clear</button>
+    </div>
+    <div class="dots" id="hdots"></div>
+    <div class="panel" id="hread">Nothing run yet.</div>
+  </div>
+  <div class="rule">An eval turns "I think this is better" into evidence for a specific decision.</div>
+</section>
+
+<!-- AUDIT -->
+<section class="part" id="audit" data-title="Audit of your notes" data-n="✓">
+  <div class="part-head"><span class="part-num">Audit</span><h2>What I checked in your notes</h2></div>
+  <p><b>Verdict: the notes are accurate.</b> The framework, definitions and both worked numbers hold up (pass@3 = 1 − 0.25³ = 98.4%, pass^3 = 0.75³ = 42.2%). The issues are small wording errors plus a set of gaps interviewers commonly probe. Fixes are marked <span class="fixed">Fixed</span> and additions <span class="added">Added</span> throughout the site.</p>
+  <h3>Corrections</h3>
+  <div class="tw"><table>
+    <tr><th>In your notes</th><th>Problem</th><th>Corrected</th></tr>
+    <tr><td>"Metric: how many executions are summarized"</td><td>A metric isn't a count of executions</td><td>A metric is <i>how results across many trials are summarized</i> (a rate, mean, percentile, or interval).</td></tr>
+    <tr><td>Evidence ladder: … LLM judge → Human → Proxy</td><td>Easy to misread as "LLM judges beat humans"</td><td>The ladder ranks <i>directness and determinism</i> of evidence. For subjective criteria, expert human labels are the gold standard used to calibrate LLM judges.</td></tr>
+    <tr><td>Oracle probe 3: "stronger model fails too, so scaffold is the problem"</td><td>Too narrow</td><td>If every probe fails, suspect scaffold <i>or</i> the case, harness, spec or grader. Go back to measurement-first checks.</td></tr>
+    <tr><td>pass@k = 1 − (1 − p)^k</td><td>Assumes independent trials and a known p</td><td>In practice p is estimated from samples. HumanEval uses the unbiased estimator 1 − C(n−c, k)/C(n, k) with n samples and c correct.</td></tr>
+    <tr><td>"Don't rely only on agreement"</td><td>Doesn't name what to use instead</td><td>Report true-pass/true-fail rates (or precision/recall on the FAIL class) and chance-corrected agreement such as Cohen's κ.</td></tr>
+  </table></div>
+  <h3>Gaps added for interviews</h3>
+  <ul>
+    <li><a href="#p8">Confidence intervals</a> (Wilson), the rule of three, and comparing two versions properly</li>
+    <li><a href="#p7">More judge biases</a>: self-preference, authority/format, leniency; judge validation with κ</li>
+    <li><a href="#p14">RAG metrics</a>: precision@k, recall@k, MRR, nDCG, faithfulness, answer relevance</li>
+    <li><a href="#p14">Agent metrics</a>: task success, tool-call accuracy, trajectory evaluation, cost and latency</li>
+    <li><a href="#p14">Classic reference metrics</a>: exact match, token F1, BLEU, ROUGE, BERTScore, and their limits</li>
+    <li><a href="#p14">Judging modes</a>: pointwise vs pairwise vs reference-guided; binary pass/fail vs Likert scales</li>
+    <li><a href="#p14">Goodhart's law, contamination, criteria drift</a>, human-annotation agreement</li>
+    <li><a href="#p14">Online evaluation terms</a>: shadow, canary, A/B, guardrail metrics; evals in CI; the tooling landscape</li>
+  </ul>
+</section>
+
+<!-- PART 0 -->
+<section class="part" id="p0" data-title="The big picture" data-n="0">
+  <div class="part-head"><span class="part-num">Part 0</span><h2>The big picture</h2></div>
+  <h3>Why AI systems are hard to judge by eye</h3>
+  <div class="grid3">
+    <div class="card"><h4>Outputs are distributions</h4>The same input can produce different outputs. One trial is one sample.</div>
+    <div class="card"><h4>Fluent ≠ correct</h4>The model can confidently say something while the underlying action failed. Narration can differ from actual state.</div>
+    <div class="card"><h4>Averages hide tails</h4>A 99% average can hide a rare but catastrophic failure.</div>
+  </div>
+  <div class="widget" id="w-compare">
+    <p class="wt">Two ways to ship</p>
+    <p class="wd">Toggle to compare the loops.</p>
+    <div class="row"><button class="chip on" data-mode="no" type="button">Without evals</button><button class="chip" data-mode="yes" type="button">With evals</button></div>
+    <div class="flow" id="cmpFlow"></div>
+  </div>
+</section>
+
+<!-- PART 1 -->
+<section class="part" id="p1" data-title="What is an eval?" data-n="1">
+  <div class="part-head"><span class="part-num">Part 1</span><h2>What is an eval?</h2></div>
+  <div class="def"><b class="t">Definition: eval</b><p>A <b>repeatable procedure</b> that runs defined cases, observes behavior or outcomes, judges them against explicit criteria, aggregates the results, and supports a decision.</p></div>
+  <div class="widget" id="w-spine">
+    <p class="wt">The eval spine</p>
+    <p class="wd">Click each stage.</p>
+    <div class="flow" id="spineFlow"></div>
+    <div class="panel" id="spinePanel">Pick a stage.</div>
+  </div>
+  <div class="rule">If no decision depends on the eval, it is decoration.<small>Repeatable means someone else can run it and get meaningful evidence.</small></div>
+
+  <h3>Anatomy: the seven slots</h3>
+  <div class="widget" id="w-anat">
+    <p class="wt">Seven slots, filled in for a refund agent</p>
+    <p class="wd">Click a slot to see what goes in it.</p>
+    <div class="flow" id="anatFlow"></div>
+    <div class="panel" id="anatPanel">Pick a slot.</div>
+  </div>
+
+  <h3>Three layers of evaluation</h3>
+  <div class="widget" id="w-layers">
+    <p class="wt">Benchmark, application, production, and back again</p>
+    <p class="wd">Click a layer. The loop closes when production failures become new offline cases.</p>
+    <div class="flow" id="layerFlow"></div>
+    <div class="panel" id="layerPanel">Pick a layer.</div>
+  </div>
+
+  <h3>What an eval is not</h3>
+  <div class="grid2">
+    <div class="card"><h4>Not one magic metric</h4>Correctness, safety, latency, tool execution and retrieval each need different evidence.</div>
+    <div class="card"><h4>Not merely prompt testing</h4>The fix may belong in retrieval, tool execution, state management, code, the model, the spec, or the eval itself.</div>
+    <div class="card"><h4>Not a guardrail</h4>A guardrail <i>intervenes</i> ("stop this action"). An eval <i>measures</i> ("did this action happen correctly?").</div>
+    <div class="card"><h4>A number isn't automatically objective</h4>92% of what? Judged how? On which cases? By whom? Metrics move judgment upstream; they don't remove it.</div>
+  </div>
+
+  <h3>Claim boundary</h3>
+  <div class="def"><b class="t">Principle</b><p>A result extends only as far as the evidence behind it: its cases, environment, grader, and sampling.</p></div>
+  <div class="widget" id="w-claim">
+    <p class="wt">Which claims does this evidence support?</p>
+    <p class="wd"><b>Evidence:</b> 94% pass on 200 English refund cases, staging environment, one trial per case, graded by an LLM judge validated on 80 expert labels.</p>
+    <div id="claimList"></div>
+  </div>
+</section>
+
+<!-- PART 2 -->
+<section class="part" id="p2" data-title="Core vocabulary" data-n="2">
+  <div class="part-head"><span class="part-num">Part 2</span><h2>Core vocabulary</h2></div>
+  <div class="def"><b class="t">Case</b><p>A reproducible situation being tested. Not merely a prompt: user input, initial state, expected behavior, forbidden behavior, severity, and metadata/slices.</p></div>
+  <div class="widget" id="w-case">
+    <p class="wt">Build up a case</p>
+    <p class="wd">Toggle fields on. A prompt alone is the first line only.</p>
+    <div class="row" id="caseChips"></div>
+    <div class="case-card" id="caseCard" style="margin-top:10px"></div>
+  </div>
+  <div class="def"><b class="t">Trial</b><p>One execution of a case. Because systems are stochastic, the same case can pass on trial 1 and fail on trial 2.</p></div>
+  <div class="def"><b class="t">Trace</b><p>What happened during the execution: request, retrieval, model, tool call, tool result, state change, final response. The main diagnostic artifact.</p></div>
+  <div class="widget" id="w-trace">
+    <p class="wt">Step through a trace</p>
+    <p class="wd">Case: "The charger was missing. Refund just that part."</p>
+    <div class="row"><button class="btn" id="trPrev" type="button">Previous</button><button class="btn primary" id="trNext" type="button">Next step</button><span class="stat" id="trPos"></span></div>
+    <div class="flow" id="trFlow"></div>
+    <div class="panel" id="trPanel"></div>
+  </div>
+  <div class="def"><b class="t">Holdout</b><p>Evidence you deliberately haven't "spent" while developing. Repeatedly testing on the same data lets you optimize against it; the holdout is the final, untouched check.</p></div>
+
+  <h3>Five axes to describe any eval</h3>
+  <div class="widget" id="w-axes">
+    <p class="wt">Compose an eval description</p>
+    <p class="wd">Pick one option per axis. One suite can't honestly serve every purpose.</p>
+    <div id="axesBox"></div>
+    <div class="panel" id="axesOut"></div>
+  </div>
+</section>
+
+<!-- PART 3 -->
+<section class="part" id="p3" data-title="End-to-end vs component" data-n="3">
+  <div class="part-head"><span class="part-num">Part 3</span><h2>End-to-end vs component</h2></div>
+  <div class="widget" id="w-pipe">
+    <p class="wt">The application pipeline</p>
+    <p class="wd">Click a stage for its component question, or check the whole thing end-to-end.</p>
+    <div class="flow" id="pipeFlow"></div>
+    <div class="row"><button class="btn primary" id="e2eBtn" type="button">Run end-to-end check</button></div>
+    <div class="panel" id="pipePanel">Pick a stage.</div>
+  </div>
+  <div class="rule">End-to-end = truth. Component = diagnosis.<small>A component metric is only a proxy until it's shown to track the end-to-end result.</small></div>
+</section>
+
+<!-- PART 4 -->
+<section class="part" id="p4" data-title="The eval design loop" data-n="4">
+  <div class="part-head"><span class="part-num">Part 4</span><h2>The eval design loop</h2></div>
+  <p>Nine steps, in order. Framework choice comes last, never first.</p>
+  <div class="widget" id="w-nine">
+    <p class="wt">Walk the nine steps</p>
+    <div class="flow" id="nineFlow"></div>
+    <div class="panel" id="ninePanel"></div>
+  </div>
+  <h3>Error analysis before automation</h3>
+  <p>Your first eval artifact is a taxonomy, not <code>eval.py</code>: read about 100 traces, write observations, cluster failures, name classes, count them.</p>
+  <div class="widget" id="w-err">
+    <p class="wt">A failure taxonomy from 100 traces</p>
+    <p class="wd">Click a bar to see a representative trace note.</p>
+    <div id="errBars"></div>
+    <div class="panel" id="errPanel">Pick a failure class.</div>
+  </div>
+  <div class="iv"><b class="t">Interview angle <span class="added">Added</span></b> Writing free-text notes on traces first and clustering them later is called <b>open coding → axial coding</b> (from qualitative research). Expect a question like "how did you decide what to measure?" The strong answer is "I read traces and counted failure classes before writing any metric."</div>
+</section>
+
+<!-- PART 5 -->
+<section class="part" id="p5" data-title="Case design" data-n="5">
+  <div class="part-head"><span class="part-num">Part 5</span><h2>Case design</h2></div>
+  <div class="def"><b class="t">Negative space is first-class</b><p>Define what must <i>not</i> happen (refund whole order; claim success when the tool failed) as carefully as what should.</p></div>
+  <h3>Where to look for evidence</h3>
+  <div class="widget" id="w-where">
+    <p class="wt">Grade the closest observable to the real outcome</p>
+    <div class="row" id="whereChips"></div>
+    <div class="panel" id="wherePanel"></div>
+  </div>
+  <h3>Case buckets, and why slices must be reported separately</h3>
+  <div class="widget" id="w-buckets">
+    <p class="wt">How a blended average hides a risk slice</p>
+    <p class="wd">Change how much of the suite is high-impact. Watch the headline number stay comfortable.</p>
+    <label class="sl">High-impact share of suite: <b id="hiV">5%</b><input type="range" id="hi" min="1" max="40" value="5"></label>
+    <div class="tw"><table id="bucketTable"></table></div>
+    <div class="panel" id="bucketOut"></div>
+  </div>
+  <h3>Where cases come from</h3>
+  <p>Production logs, domain experts, incidents, synthetic generation, benchmarks, red-team cases.</p>
+  <div class="grid2">
+    <div class="card"><h4>Synthetic data warning</h4>"Generate 1,000 diverse questions" tends to yield one template with minor wording changes. Generate from a <b>coverage plan</b> (dimensions × values) instead.</div>
+    <div class="card"><h4>Circularity warning</h4>Don't let one model generate the cases, the answers, and the judgments. Its blind spots become your eval's blind spots.</div>
+  </div>
+  <h3>Dataset leakage</h3>
+  <p>Cases need independence across <b>user, document, repository, and time</b>. Random row splits can leak near-duplicates into both dev and holdout. A time split (before/after) also helps detect drift.</p>
+  <div class="widget" id="w-leak">
+    <p class="wt">Random row split vs group split</p>
+    <p class="wd">12 cases from 4 users. Same color = same user, so near-duplicate cases.</p>
+    <div class="row"><button class="btn" id="lkRandom" type="button">Random row split</button><button class="btn primary" id="lkGroup" type="button">Split by user</button></div>
+    <div class="split" style="margin-top:10px"><div class="bin"><h5>Dev</h5><div id="lkDev"></div></div><div class="bin"><h5>Holdout</h5><div id="lkHold"></div></div></div>
+    <div class="panel" id="lkOut"></div>
+  </div>
+  <h3>How many cases?</h3>
+  <div class="grid2">
+    <div class="card"><h4>Learning regime</h4>30–100 carefully chosen cases. Purpose: discover failure modes. You can actually read every trace.</div>
+    <div class="card"><h4>Claiming regime</h4>"Only 0.1% of events fail" needs thousands of exposures, stratified structure, monitoring and rollback. <a href="#w-ci">See the rule of three.</a></div>
+  </div>
+  <div class="rule">Don't make rare-event claims from a small learning dataset.</div>
+</section>
+
+<!-- PART 6 -->
+<section class="part" id="p6" data-title="Criteria, graders, metrics" data-n="6">
+  <div class="part-head"><span class="part-num">Part 6</span><h2>Criteria, graders, metrics</h2></div>
+  <div class="grid3">
+    <div class="card"><h4>Criterion</h4>What "good" means.<br><i>Refund only the eligible item.</i></div>
+    <div class="card"><h4>Grader</h4>How one trial is judged.<br><i>Compare actual DB state with expected state.</i></div>
+    <div class="card"><h4>Metric <span class="fixed">Fixed</span></h4>How results across many trials are summarized.<br><i>92/100 → correct-action rate 92%.</i></div>
+  </div>
+  <p>Teams often jump straight to a metric and never write the criterion down.</p>
+  <h3>The evidence ladder</h3>
+  <div class="widget" id="w-ladder">
+    <p class="wt">Use the closest, strongest observable</p>
+    <p class="wd">Top = most direct and deterministic. Click a rung.</p>
+    <div class="flow vertical" id="ladderFlow"></div>
+    <div class="panel" id="ladderPanel">Pick a rung.</div>
+  </div>
+  <div class="iv"><b class="t">Clarification <span class="fixed">Fixed</span></b> The order is about directness, not trust in humans. For subjective criteria (tone, helpfulness), expert human labels are the reference you calibrate LLM judges against.</div>
+</section>
+
+<!-- PART 7 -->
+<section class="part" id="p7" data-title="LLM as a judge" data-n="7">
+  <div class="part-head"><span class="part-num">Part 7</span><h2>LLM as a judge</h2></div>
+  <div class="def"><b class="t">Core idea</b><p>An LLM judge is a <b>measurement instrument</b>. Instruments have <b>noise</b> (decisions flip on irrelevant changes) and <b>bias</b> (systematic preferences). Measure both.</p></div>
+  <h3>What's wrong with the naive judge</h3>
+  <div class="case-card">Question: ...
+Response A: ...
+Response B: ...
+Which is better? Reply A or B.</div>
+  <ul>
+    <li><b>No rubric:</b> the judge invents its own meaning of "better".</li>
+    <li><b>No tie:</b> two equally good answers must still be ranked.</li>
+    <li><b>Hidden preferences:</b> longer, more polished, particular styles.</li>
+  </ul>
+  <div class="widget" id="w-judge">
+    <p class="wt">Judge lab: position and verbosity bias</p>
+    <p class="wd">Each simulated pair is A = correct and concise, B = wrong and verbose. Every pair is judged in both orders.</p>
+    <div class="row">
+      <label class="sl">Position bias: <b id="pbV">0.30</b><input type="range" id="pb" min="0" max="100" value="30"></label>
+      <label class="sl">Verbosity bias: <b id="vbV">0.40</b><input type="range" id="vb" min="0" max="100" value="40"></label>
+    </div>
+    <div class="row" style="margin-top:6px"><button class="chip on" data-j="naive" type="button">Naive judge</button><button class="chip" data-j="better" type="button">Better judge</button><button class="btn primary sm" id="jRun" type="button">Judge 200 pairs</button></div>
+    <div class="grid3" id="jOut" style="margin-top:10px"></div>
+    <div class="panel" id="jNote"></div>
+  </div>
+  <h3>Better judge design</h3>
+  <ol class="steps"><li>Correctness-only rubric</li><li>Atomic criteria (one question each)</li><li>Length and style explicitly out of scope</li><li>Tie allowed</li><li>Judge both orders; if they disagree, record a tie and flag it</li></ol>
+  <p>This removes position bias by construction, at roughly 2× judge calls.</p>
+  <h3>Other judge biases <span class="added">Added</span></h3>
+  <div class="grid2">
+    <div class="card"><h4>Self-preference</h4>Judges tend to favor outputs from their own model family. Use a different family from the system under test when possible.</div>
+    <div class="card"><h4>Format / authority</h4>Markdown, citations and confident tone can win regardless of correctness.</div>
+    <div class="card"><h4>Leniency</h4>Pointwise judges often skew toward PASS or high scores. Require evidence for each criterion.</div>
+    <div class="card"><h4>Reasoning order</h4>Ask for the reasoning before the verdict, not after, so the verdict isn't rationalized.</div>
+  </div>
+  <h3>Validate your judge</h3>
+  <div class="widget" id="w-kappa">
+    <p class="wt">Why raw agreement lies</p>
+    <p class="wd">Compare a judge against 100 expert labels. Try the lazy judge at a high pass base rate.</p>
+    <div class="row">
+      <label class="sl">Truly-passing share: <b id="brV">90%</b><input type="range" id="br" min="50" max="98" value="90"></label>
+    </div>
+    <div class="row" style="margin-top:6px"><button class="chip on" data-k="lazy" type="button">Always-PASS judge</button><button class="chip" data-k="real" type="button">Real judge (catches 80% of fails)</button></div>
+    <div class="grid2" style="margin-top:10px"><div id="kMatrix"></div><div id="kStats"></div></div>
+    <div class="panel" id="kNote"></div>
+  </div>
+  <div class="iv"><b class="t">Interview angle <span class="added">Added</span></b> Name the metrics: <b>false-pass rate</b> (judge says PASS, expert says FAIL; the dangerous one), <b>false-fail rate</b>, true-pass/true-fail rates, and <b>Cohen's κ</b> = (observed − chance agreement) / (1 − chance agreement). Validate on a held-out labeled set, not the examples you tuned the judge prompt on.</div>
+</section>
+
+<!-- PART 8 -->
+<section class="part" id="p8" data-title="Statistics and trust" data-n="8">
+  <div class="part-head"><span class="part-num">Part 8</span><h2>Statistics and trust</h2></div>
+  <h3>pass@k vs pass^k</h3>
+  <div class="widget" id="w-pk">
+    <p class="wt">Same p, very different stories</p>
+    <div class="row">
+      <label class="sl">Per-trial success p: <b id="pkPV">0.75</b><input type="range" id="pkP" min="10" max="99" value="75"></label>
+      <label class="sl">Attempts k: <b id="pkKV">3</b><input type="range" id="pkK" min="1" max="10" value="3"></label>
+    </div>
+    <div class="grid2" style="margin-top:10px">
+      <div class="card"><h4>pass@k: at least one succeeds</h4><div class="big pass" id="pkAt"></div><div class="stat">1 − (1 − p)^k</div></div>
+      <div class="card"><h4>pass^k: all k succeed</h4><div class="big fail" id="pkAll"></div><div class="stat">p^k</div></div>
+    </div>
+    <div id="pkChart" style="margin-top:12px"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h4>pass@k asks</h4>Can I get <i>a</i> successful attempt? Fits coding with tests you can check, or best-of-n sampling.</div>
+    <div class="card"><h4>pass^k asks</h4>Can I succeed <i>consistently</i>? Fits customer-facing agents where every conversation must work. Popularized by τ-bench.</div>
+  </div>
+  <div class="iv"><b class="t">Precision note <span class="fixed">Fixed</span></b> The formulas assume independent trials and a known p. Real evals estimate from n samples with c correct; HumanEval's unbiased estimator is <code>pass@k = 1 − C(n−c, k) / C(n, k)</code>.</div>
+
+  <h3>Confidence intervals <span class="added">Added</span></h3>
+  <p>"92%" means nothing without its uncertainty. Report an interval. Wilson is the standard choice for pass rates because it behaves well near 0% and 100%.</p>
+  <div class="widget" id="w-ci">
+    <p class="wt">Interval calculator</p>
+    <div class="row">
+      <label class="sl">Cases n: <b id="ciNV">100</b><input type="range" id="ciN" min="10" max="3000" value="100"></label>
+      <label class="sl">Pass rate observed: <b id="ciPV">92%</b><input type="range" id="ciP" min="0" max="100" value="92"></label>
+    </div>
+    <div id="ciViz" style="margin-top:10px"></div>
+    <div class="panel" id="ciOut"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h4>Rule of three</h4>Zero failures in n trials → 95% upper bound on the failure rate ≈ <b>3/n</b>. To claim &lt;0.1% you need ≈3,000 failure-free trials.</div>
+    <div class="card"><h4>Comparing A vs B</h4>Run both versions on the <b>same cases</b> and compare per case (paired). Use McNemar's test or a paired bootstrap; count wins, losses and ties rather than eyeballing two averages.</div>
+  </div>
+
+  <h3>Severity</h3>
+  <div class="widget" id="w-sev">
+    <p class="wt">11 failures are not 11 equal failures</p>
+    <div class="row"><button class="chip on" data-s="avg" type="button">One blended score</button><button class="chip" data-s="sep" type="button">Severity separated</button></div>
+    <div class="panel" id="sevOut"></div>
+  </div>
+  <div class="rule">Counts are observations. Weights and severity priorities are product decisions.<small>Keep critical-failure rates separate from ordinary quality averages.</small></div>
+</section>
+
+<!-- PART 9 -->
+<section class="part" id="p9" data-title="Debugging failures" data-n="9">
+  <div class="part-head"><span class="part-num">Part 9</span><h2>Debugging failures</h2></div>
+  <p>Two systems are under investigation: <b>the product</b> and <b>the measurement system</b>. Your eval can be the thing that's wrong.</p>
+  <h3>The failure chain</h3>
+  <div class="flow" id="chainFlow"></div>
+  <div class="rule">Find the earliest layer that explains the evidence.<small>A defect early in the chain contaminates everything after it.</small></div>
+  <h3>Measurement first</h3>
+  <div class="widget" id="w-meas">
+    <p class="wt">Three questions before blaming the product</p>
+    <div id="measBox"></div>
+    <div class="panel" id="measOut">Answer each question.</div>
+  </div>
+  <h3>First-divergence debugging</h3>
+  <div class="widget" id="w-dbg">
+    <p class="wt">Debugger: stop at the first NO</p>
+    <p class="wd">Pick a failing scenario, then check each step in order.</p>
+    <div class="row" id="dbgChips"></div>
+    <div id="dbgSteps" style="margin-top:8px"></div>
+    <div class="panel" id="dbgOut"></div>
+  </div>
+  <h3>Oracle probes</h3>
+  <div class="def"><b class="t">Oracle probe</b><p>A controlled experiment where one part of the system is made artificially perfect to locate the failure. Hypothesis → experiment → result → conclusion, instead of guessing.</p></div>
+  <div class="widget" id="w-oracle">
+    <p class="wt">Mystery failure: find the cause with probes</p>
+    <p class="wd">A hidden root cause has been picked. Run probes, then make your call.</p>
+    <div class="row"><button class="btn" data-o="ev" type="button">Inject perfect evidence</button><button class="btn" data-o="tool" type="button">Inject perfect tool result</button><button class="btn" data-o="model" type="button">Swap in stronger model</button><button class="btn sm" id="oNew" type="button">New mystery</button></div>
+    <div class="panel" id="oLog">No probes run.</div>
+    <div class="row" style="margin-top:8px" id="oGuess"></div>
+    <div class="panel" id="oVerdict" hidden></div>
+  </div>
+  <h3>Rerun outward</h3>
+  <div class="flow" id="outFlow"></div>
+  <div class="def"><b class="t">Paired negative</b><p>Every fix has a dual failure mode. If you fix "refund the eligible item", also test "don't refund the ineligible item".</p></div>
+</section>
+
+<!-- PART 10 -->
+<section class="part" id="p10" data-title="Real failure patterns" data-n="10">
+  <div class="part-head"><span class="part-num">Part 10</span><h2>Real failure patterns</h2></div>
+  <div class="widget" id="w-pat">
+    <p class="wt">Four patterns. Reveal what really happened.</p>
+    <div id="patBox"></div>
+  </div>
+</section>
+
+<!-- PART 11 -->
+<section class="part" id="p11" data-title="Choosing the fix" data-n="11">
+  <div class="part-head"><span class="part-num">Part 11</span><h2>Choosing the fix</h2></div>
+  <p>Fix the earliest layer. Move from cheap, permanent fixes toward expensive, brittle ones only when evidence points there.</p>
+  <div class="flow" id="fixLadder"></div>
+  <div class="widget" id="w-fix">
+    <p class="wt">Pick the fix</p>
+    <div id="fixQ"></div>
+  </div>
+  <h3>Prompt whack-a-mole</h3>
+  <div class="widget" id="w-mole">
+    <p class="wt">Patch the prompt case by case</p>
+    <p class="wd">Keep patching and watch contradictions pile up. Then fix the class.</p>
+    <div class="row"><button class="btn" id="molePatch" type="button">Case fails: add an instruction</button><button class="btn primary" id="moleClass" type="button">Fix the failure class</button></div>
+    <div class="row stat" style="margin:8px 0" id="moleStats"></div>
+    <div class="prompt-box" id="molePrompt"></div>
+  </div>
+</section>
+
+<!-- PART 12 -->
+<section class="part" id="p12" data-title="Evals as a system" data-n="12">
+  <div class="part-head"><span class="part-num">Part 12</span><h2>Evals as a system</h2></div>
+  <div class="widget" id="w-fly">
+    <p class="wt">The eval flywheel</p>
+    <p class="wd">Click a stage. The loop returns to EVAL.</p>
+    <div class="flow" id="flyFlow"></div>
+    <div class="panel" id="flyPanel">Pick a stage.</div>
+  </div>
+  <div class="rule">An incident that doesn't become a regression case can recur.<small>Test the class, not merely the anecdote.</small></div>
+  <h3>Evals decay</h3>
+  <p>"A benchmark is an instrument, not an institution." Causes of decay: broken cases, underspecified tasks, contamination, changing system behavior, changing production environment, and metrics losing connection to real outcomes. The suite itself needs maintenance.</p>
+  <div class="iv"><b class="t">Interview angle <span class="added">Added</span></b> <b>Goodhart's law:</b> when a measure becomes a target, it stops being a good measure. Holdouts, refreshed cases and periodic human audits are the defenses. <b>Criteria drift:</b> graders' definition of "good" shifts as they see more outputs, so re-check rubrics against fresh traces.</div>
+</section>
+
+<!-- PART 13 -->
+<section class="part" id="p13" data-title="The master framework" data-n="13">
+  <div class="part-head"><span class="part-num">Part 13</span><h2>One schema for every AI system</h2></div>
+  <div class="flow" id="masterFlow"></div>
+  <div class="widget" id="w-master">
+    <p class="wt">Same spine, different evidence</p>
+    <div class="row" id="masterChips"></div>
+    <div class="tw" style="margin-top:10px"><table id="masterTable"></table></div>
+  </div>
+</section>
+
+<!-- PART 14 -->
+<section class="part" id="p14" data-title="Interview additions" data-n="14">
+  <div class="part-head"><span class="part-num">Part 14</span><h2>Interview additions <span class="added">Added</span></h2></div>
+  <p class="lede">Not in the source PDF, but commonly asked. Each is framed to plug into the spine you already know.</p>
+
+  <h3>RAG metrics</h3>
+  <div class="grid2">
+    <div class="card"><h4>Retrieval (component)</h4><b>Precision@k</b>: relevant in top k ÷ k. <b>Recall@k</b>: relevant in top k ÷ all relevant. <b>Hit rate@k</b>: any relevant in top k. <b>MRR</b>: 1 ÷ rank of first relevant. <b>nDCG</b>: rewards relevant docs ranked higher, supports graded relevance.</div>
+    <div class="card"><h4>Generation</h4><b>Faithfulness / groundedness</b>: every claim supported by retrieved context. <b>Answer relevance</b>: addresses the question. <b>Context precision/recall</b>: whether the right evidence was retrieved (Ragas naming). <b>Citation accuracy</b>: cited source actually supports the claim.</div>
+  </div>
+  <div class="widget" id="w-rag">
+    <p class="wt">Retrieval metrics calculator</p>
+    <p class="wd">Click documents to mark them relevant. The corpus has <b>3</b> relevant documents in total.</p>
+    <label class="sl">k: <b id="ragKV">3</b><input type="range" id="ragK" min="1" max="6" value="3"></label>
+    <div id="ragDocs"></div>
+    <div class="grid3" id="ragOut" style="margin-top:8px"></div>
+  </div>
+  <p>Hallucination vs retrieval failure maps to this split: if the right doc wasn't retrieved, it's a retrieval problem (Part 10); if it was retrieved and the answer contradicts it, it's a faithfulness problem.</p>
+
+  <h3>Agent metrics</h3>
+  <div class="tw"><table>
+    <tr><th>Metric</th><th>What it checks</th><th>Evidence</th></tr>
+    <tr><td>Task success / goal completion</td><td>Did the end state match?</td><td>DB or environment state</td></tr>
+    <tr><td>Tool-selection accuracy</td><td>Right tool chosen</td><td>Trace</td></tr>
+    <tr><td>Argument correctness</td><td>Right parameters (IDs, amounts)</td><td>Trace, schema checks</td></tr>
+    <tr><td>Trajectory eval</td><td>Path was acceptable: no forbidden or redundant steps. Exact-match trajectories are brittle; prefer "contains required steps, avoids forbidden ones"</td><td>Trace</td></tr>
+    <tr><td>Steps / turns / tokens per task</td><td>Efficiency</td><td>Trace</td></tr>
+    <tr><td>Cost and latency (P50, P95, P99)</td><td>Budget guardrails for the gate</td><td>Telemetry</td></tr>
+    <tr><td>Recovery rate</td><td>Handles tool errors honestly</td><td>Fault-injected cases</td></tr>
+  </table></div>
+
+  <h3>Classic reference-based metrics</h3>
+  <div class="tw"><table>
+    <tr><th>Metric</th><th>How it works</th><th>Weakness</th></tr>
+    <tr><td>Exact match</td><td>String equality after normalization</td><td>Punishes correct paraphrases ("until 8 August" vs "within 30 days")</td></tr>
+    <tr><td>Token F1</td><td>Word overlap precision/recall (SQuAD)</td><td>Overlap ≠ meaning</td></tr>
+    <tr><td>BLEU</td><td>n-gram precision vs reference (translation)</td><td>Poor for open-ended generation</td></tr>
+    <tr><td>ROUGE</td><td>n-gram/sequence recall (summarization)</td><td>Rewards copying, not correctness</td></tr>
+    <tr><td>BERTScore / embedding similarity</td><td>Semantic similarity of embeddings</td><td>"Similar" can still be factually wrong (negations, numbers)</td></tr>
+    <tr><td>Perplexity</td><td>Model fit to text</td><td>Measures the model, not the task</td></tr>
+  </table></div>
+
+  <h3>Judging modes and scales</h3>
+  <div class="grid3">
+    <div class="card"><h4>Pointwise</h4>Score one output against a rubric. Scales to monitoring. Prone to leniency.</div>
+    <div class="card"><h4>Pairwise</h4>Compare two outputs. More sensitive for A/B decisions. Needs order swapping.</div>
+    <div class="card"><h4>Reference-guided</h4>Judge sees a gold answer. Better accuracy, but inherits the reference's flaws.</div>
+  </div>
+  <div class="iv"><b class="t">Binary vs Likert</b> Prefer <b>binary pass/fail per atomic criterion</b>. 1–5 scales drift between graders, the middle values are poorly defined, and "3.7 average" doesn't tell you what to fix. If you need nuance, split the criterion.</div>
+
+  <h3>Human evaluation</h3>
+  <p>Write annotation guidelines with examples, have at least two annotators label an overlap set, and measure inter-annotator agreement (Cohen's κ for two raters, Krippendorff's α or Fleiss' κ for more). Low agreement usually means the criterion is underspecified, not that the annotators are careless.</p>
+
+  <h3>Contamination</h3>
+  <p>Public benchmark items may be in a model's training data, inflating scores. Defenses: private or freshly written cases, time-split cases created after the model's cutoff, and canary strings in held-out data.</p>
+
+  <h3>Online evaluation vocabulary</h3>
+  <div class="grid2">
+    <div class="card"><h4>Shadow</h4>New version runs on real traffic; outputs are logged, not shown to users.</div>
+    <div class="card"><h4>Canary</h4>New version serves a small slice of users, with rollback ready.</div>
+    <div class="card"><h4>A/B test</h4>Randomized split with a pre-registered primary metric and sample size.</div>
+    <div class="card"><h4>Guardrail metrics</h4>Metrics that must not regress (safety, latency, cost) even if the primary improves. Different from a runtime guardrail.</div>
+  </div>
+
+  <h3>Evals in the dev workflow</h3>
+  <ul>
+    <li><b>Eval-driven development:</b> write the failing case before the fix, like TDD.</li>
+    <li><b>CI gates:</b> a small fast regression suite on every PR; the full suite nightly or before release.</li>
+    <li><b>Version everything:</b> dataset, prompt, model, judge prompt, and harness, so a score is reproducible.</li>
+    <li><b>Tooling</b> (choose last): promptfoo, DeepEval, Ragas, Inspect, OpenAI Evals, LangSmith, Braintrust, Langfuse, Arize Phoenix.</li>
+  </ul>
+</section>
+
+<!-- CHEAT SHEET -->
+<section class="part" id="cheat" data-title="Quick reference" data-n="★">
+  <div class="part-head"><span class="part-num">Ref</span><h2>The seven things to remember</h2></div>
+  <ol class="steps">
+    <li><b>Define the decision first.</b> What will this eval decide?</li>
+    <li><b>A case is more than a prompt:</b> input + state + expected + forbidden + severity.</li>
+    <li><b>Grade the closest observable to reality.</b> DB state beats agent narration.</li>
+    <li><b>Separate criterion, grader, metric.</b></li>
+    <li><b>Your evaluator can be wrong.</b> Product failure or eval failure?</li>
+    <li><b>Debug from the first divergence.</b> Find the first NO.</li>
+    <li><b>Every production failure should improve the suite.</b> Incident → case → regression.</li>
+  </ol>
+  <h3>Final mental model</h3>
+  <p>Don't ask "how do I evaluate my LLM?" Ask: <b>what decision am I making, what evidence would convince me, and how can I obtain it repeatedly?</b></p>
+  <div class="flow" id="finalFlow"></div>
+  <div class="rule">AI evals = turning AI behavior into trustworthy evidence for a decision.</div>
+</section>
+
+<!-- GLOSSARY -->
+<section class="part" id="glossary" data-title="Glossary" data-n="G">
+  <div class="part-head"><span class="part-num">Ref</span><h2>Glossary</h2></div>
+  <input class="search" id="glSearch" type="search" placeholder="Search terms, e.g. holdout, kappa, pass^k" aria-label="Search glossary">
+  <div id="glList" style="margin-top:10px"></div>
+</section>
+
+<!-- FLASHCARDS -->
+<section class="part" id="flash" data-title="Flashcards" data-n="F">
+  <div class="part-head"><span class="part-num">Practice</span><h2>Flashcards</h2></div>
+  <p>Click the card to flip. Every glossary term is in the deck.</p>
+  <div class="fc" id="fc" tabindex="0" role="button" aria-label="Flip card"><div class="fc-inner"><div class="fc-face"><div class="term" id="fcTerm"></div><div class="stat" style="color:var(--muted);margin-top:8px">Recall the definition, then flip</div></div><div class="fc-face fc-back"><div id="fcDef"></div></div></div></div>
+  <div class="row" style="margin-top:12px"><button class="btn" id="fcPrev" type="button">Previous</button><button class="btn primary" id="fcNext" type="button">Next</button><button class="btn sm" id="fcShuffle" type="button">Shuffle</button><span class="stat" id="fcPos"></span></div>
+</section>
+
+<!-- QUIZ -->
+<section class="part" id="quiz" data-title="Interview quiz" data-n="Q">
+  <div class="part-head"><span class="part-num">Practice</span><h2>Interview quiz</h2></div>
+  <p>Answer, then read the explanation. Score updates as you go.</p>
+  <div class="stat" id="qScore"></div>
+  <div id="qBox"></div>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct=(x,d=1)=>(x*100).toFixed(d)+"%";
+function store(k,v){try{if(v===undefined){return JSON.parse(localStorage.getItem(k)||"null")}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+
+/* ---------- theme ---------- */
+const savedTheme=store("evals-theme"); if(savedTheme) document.documentElement.setAttribute("data-theme",savedTheme);
+$("#themeBtn").onclick=()=>{const cur=document.documentElement.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",n);store("evals-theme",n)};
+
+/* ---------- nav + progress ---------- */
+const parts=$$("section.part"); const tracked=parts.filter(s=>!["start"].includes(s.id));
+let done=store("evals-done")||{};
+tracked.forEach(s=>{const b=document.createElement("button");b.type="button";b.className="btn done-btn";b.setAttribute("aria-pressed",done[s.id]?"true":"false");b.textContent=done[s.id]?"Understood":"Mark chapter as understood";b.onclick=()=>{done[s.id]=!done[s.id];store("evals-done",done);b.setAttribute("aria-pressed",done[s.id]?"true":"false");b.textContent=done[s.id]?"Understood":"Mark chapter as understood";renderNav()};s.appendChild(b)});
+function renderNav(){
+  $("#navList").innerHTML=parts.map(s=>`<li><a href="#${s.id}" data-id="${s.id}"><span class="n">${esc(s.dataset.n||"")}</span><span>${esc(s.dataset.title)}</span>${done[s.id]?'<span class="ck" aria-label="understood">✓</span>':""}</a></li>`).join("");
+  const c=tracked.filter(s=>done[s.id]).length;$("#progBar").style.width=(c/tracked.length*100)+"%";$("#progLabel").textContent=`${c} of ${tracked.length} chapters understood`;
+  $$("#navList a").forEach(a=>a.onclick=()=>{$("#side").classList.remove("open");$("#menuBtn").setAttribute("aria-expanded","false")});
+  markActive();
+}
+$("#resetBtn").onclick=()=>{done={};store("evals-done",done);$$(".done-btn").forEach(b=>{b.setAttribute("aria-pressed","false");b.textContent="Mark chapter as understood"});renderNav()};
+$("#menuBtn").onclick=()=>{const o=$("#side").classList.toggle("open");$("#menuBtn").setAttribute("aria-expanded",o?"true":"false")};
+let activeId="start";
+function markActive(){$$("#navList a").forEach(a=>a.classList.toggle("active",a.dataset.id===activeId))}
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){activeId=e.target.id;markActive()}})},{rootMargin:"-30% 0px -65% 0px"});
+parts.forEach(s=>io.observe(s)); renderNav();
+
+/* ---------- helpers ---------- */
+function flow(el,items,opts={}){ // items: [{label, info, cls}]
+  const box=typeof el==="string"?$(el):el;
+  box.innerHTML=items.map((it,i)=>`${i?'<span class="arr" aria-hidden="true">'+(opts.vertical?"↓":"→")+'</span>':""}<button type="button" class="node ${it.cls||""}" data-i="${i}">${esc(it.label)}</button>`).join("")+(opts.loop?`<span class="arr">↺ ${esc(opts.loop)}</span>`:"");
+  if(opts.panel){box.querySelectorAll(".node").forEach(b=>b.onclick=()=>{box.querySelectorAll(".node").forEach(x=>x.classList.remove("on"));b.classList.add("on");$(opts.panel).innerHTML=items[+b.dataset.i].info})}
+}
+function chips(container,attr,cb){$$(`${container} [data-${attr}]`).forEach(c=>c.onclick=()=>{$$(`${container} [data-${attr}]`).forEach(x=>x.classList.remove("on"));c.classList.add("on");cb(c.dataset[attr])})}
+function wilson(k,n,z=1.96){if(!n)return[0,1];const p=k/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return[Math.max(0,c-h),Math.min(1,c+h)]}
+
+/* ---------- hero sampler ---------- */
+let hp=[];const hpEl=$("#hp");
+hpEl.oninput=()=>{$("#hp-v").textContent=hpEl.value+"%"};
+$$("#w-hero [data-n]").forEach(b=>b.onclick=()=>{const n=+b.dataset.n,p=hpEl.value/100;if(hp.length>300)hp=[];for(let i=0;i<n;i++)hp.push(Math.random()<p);renderHero()});
+$("#hclear").onclick=()=>{hp=[];renderHero()};
+function renderHero(){
+  $("#hdots").innerHTML=hp.map(x=>`<span class="dot ${x?"p":"f"}" title="${x?"pass":"fail"}"></span>`).join("");
+  if(!hp.length){$("#hread").textContent="Nothing run yet.";return}
+  const k=hp.filter(Boolean).length,n=hp.length,[lo,hi]=wilson(k,n),last10=hp.slice(-10),k10=last10.filter(Boolean).length;
+  $("#hread").innerHTML=`<b>${k}/${n}</b> passed (${pct(k/n)}). 95% interval: <b>${pct(lo)} – ${pct(hi)}</b>. True rate: ${hpEl.value}%.<br>`+
+  (n<=10?`With ${n} trial${n>1?"s":""} the interval is huge. "It looked good on my examples" lives here.`:`Your last 10 trials alone said ${k10}/10. Run 10 a few times: the story changes each time.`)+
+  (hpEl.value<100?` At ${hpEl.value}% true rate, <b>${pct(1-Math.pow(hpEl.value/100,10),0)}</b> of 10-trial checks contain at least one failure; ${pct(Math.pow(hpEl.value/100,10),0)} look perfect.`:"");
+}
+
+/* ---------- Part 0 compare ---------- */
+function cmp(m){ if(m==="no") flow("#cmpFlow",[{label:"Build"},{label:"Looks good"},{label:"Ship"},{label:"Hope",cls:"bad"}]);
+ else flow("#cmpFlow",[{label:"Define requirement"},{label:"Create cases"},{label:"Run system"},{label:"Measure behavior"},{label:"Compare to criteria"},{label:"Make decision",cls:"good"}]);}
+cmp("no"); chips("#w-compare","mode",cmp);
+
+/* ---------- Part 1 ---------- */
+flow("#spineFlow",[
+ {label:"Defined cases",info:"<b>Defined cases.</b> A fixed, reproducible set of situations: input + state + expected + forbidden. Not whatever you typed today."},
+ {label:"Observe",info:"<b>Observe behavior / outcome.</b> Capture the response, the trace, and the resulting state. Outcome often matters more than text."},
+ {label:"Judge",info:"<b>Judge against explicit criteria.</b> A grader (code, reference, model, or human) applies written criteria to each trial."},
+ {label:"Aggregate",info:"<b>Aggregate.</b> Summarize trials into metrics per slice, with uncertainty. Keep critical failures separate."},
+ {label:"Decide",cls:"good",info:"<b>Decide.</b> Ship, block, roll back, or investigate. A predeclared gate makes the decision honest."}],{panel:"#spinePanel"});
+flow("#anatFlow",[
+ {label:"1 Task",info:"<b>Task:</b> Can the agent correctly process eligible refunds?"},
+ {label:"2 Cases",info:"<b>Cases:</b> normal refund, partial refund, expired refund, manipulation attempt, high-value refund."},
+ {label:"3 Run",info:"<b>Run:</b> execute the agent on each case (possibly several trials each) in a controlled harness."},
+ {label:"4 Observation",info:"<b>Observation:</b> what actually happened? Trace, tool calls, database state, final message."},
+ {label:"5 Grader",info:"<b>Grader:</b> did it refund the correct item, and only that item?"},
+ {label:"6 Aggregation",info:"<b>Aggregation:</b> what share of cases passed, per slice (e.g. high-value separately)?"},
+ {label:"7 Decision rule",cls:"good",info:"<b>Decision rule:</b> can we ship this version? Written before the run, e.g. ≥95% correct-action rate and zero critical failures."}],{panel:"#anatPanel"});
+flow("#layerFlow",[
+ {label:"Model benchmark",info:"<b>Layer 1: model benchmark.</b> Which model should I start with? Model A vs model B, on public or generic tasks. Mainly for model selection."},
+ {label:"Application eval",info:"<b>Layer 2: application eval.</b> Does <i>my</i> application work, with my prompts, retrieval, tools, policies, orchestration and model? The main focus of the notes."},
+ {label:"Online evidence",info:"<b>Layer 3: online evidence.</b> What happens with real users? Canary, A/B testing, production monitoring."},
+ {label:"New regression cases",cls:"good",info:"<b>Close the loop.</b> Production failures become new offline cases, which feed back into the application eval."}],{panel:"#layerPanel",loop:"back to application eval"});
+const claims=[
+ ["Our agent is 94% correct.",false,"Overreach. The evidence covers English refund cases in staging only, not the whole product."],
+ ["On this set of English refund cases, in staging, the agent passed 94% of single trials.",true,"This matches the evidence exactly: population, environment, sampling."],
+ ["The agent will handle Hindi refunds at about 94%.",false,"No Hindi cases were tested. The claim leaves the evaluated population."],
+ ["The agent succeeds consistently on each case.",false,"One trial per case says nothing about consistency. You'd need pass^k with repeated trials."],
+ ["Production refund success will be 94%.",false,"Staging ≠ production traffic mix. Needs online evidence."],
+ ["The 94% could be off by a few points in either direction.",true,"Correct. With n=200, the 95% interval is roughly 90–97%, and judge error adds more."]];
+$("#claimList").innerHTML=claims.map((c,i)=>`<div class="dbg-step"><span class="q">${esc(c[0])}</span><button class="btn sm" data-c="${i}" data-a="1" type="button">Supported</button><button class="btn sm" data-c="${i}" data-a="0" type="button">Not supported</button></div><div class="panel" id="cl${i}" hidden></div>`).join("");
+$$("#claimList [data-c]").forEach(b=>b.onclick=()=>{const c=claims[b.dataset.c],ok=(b.dataset.a==="1")===c[1],p=$("#cl"+b.dataset.c);p.hidden=false;p.innerHTML=`<b class="${ok?"pass":"fail"}">${ok?"Right.":"Not quite."}</b> ${c[2]}`});
+
+/* ---------- Part 2 ---------- */
+const caseFields=[["user_input",'"The charger was missing. Refund just that part."'],["initial_state","Order #4417: laptop ₹58,000 + charger ₹1,249\nPolicy v3.2"],["expected","Refund charger only (₹1,249)"],["forbidden","Refund the entire order\nClaim success if the tool failed"],["severity","High"],["slices","partial_refund, multi_item"]];
+let caseOn={user_input:true};
+$("#caseChips").innerHTML=caseFields.map(f=>`<button class="chip" type="button" data-f="${f[0]}" aria-pressed="${!!caseOn[f[0]]}">${f[0]}</button>`).join("")+`<button class="btn sm" id="caseAll" type="button">Show all</button>`;
+function renderCase(){$("#caseCard").innerHTML=caseFields.map(f=>`<div class="${caseOn[f[0]]?"":"hide"}"><span class="k">${f[0]}:</span>\n  ${esc(f[1]).replace(/\n/g,"\n  ")}</div>`).join("");$$("#caseChips [data-f]").forEach(c=>c.setAttribute("aria-pressed",!!caseOn[c.dataset.f]))}
+$$("#caseChips [data-f]").forEach(c=>c.onclick=()=>{caseOn[c.dataset.f]=!caseOn[c.dataset.f];renderCase()});
+$("#caseAll").onclick=()=>{caseFields.forEach(f=>caseOn[f[0]]=true);renderCase()};renderCase();
+
+const trace=[["User request","Customer: the charger was missing, refund just that part."],["Retrieval","Retrieved: Refund policy v3.2 (current). Partial refunds allowed for missing items."],["Model","Plan: verify order, identify charger line item, issue partial refund."],["Tool call","refund(order_id=4417, item='charger', amount=1249)"],["Tool result","<span class='fail'>ERROR: timeout after 30s</span>"],["State change","<span class='fail'>Database unchanged. No refund row.</span>"],["Final response","\"Your ₹1,249 refund has been processed.\" <span class='fail'>(False. The response alone would PASS a text-only grader.)</span>"]];
+let tr=0;function renderTrace(){flow("#trFlow",trace.map((t,i)=>({label:t[0],cls:i===tr?"on":(i>tr?"":"")})));$$("#trFlow .node").forEach((n,i)=>{n.style.opacity=i>tr?.35:1;n.onclick=()=>{tr=i;renderTrace()}});$("#trPanel").innerHTML=`<b>${trace[tr][0]}.</b> ${trace[tr][1]}`;$("#trPos").textContent=`${tr+1}/${trace.length}`}
+$("#trNext").onclick=()=>{tr=Math.min(trace.length-1,tr+1);renderTrace()};$("#trPrev").onclick=()=>{tr=Math.max(0,tr-1);renderTrace()};renderTrace();
+
+const axes=[["What?",["model","component","end-to-end system","safety"]],["Why?",["discover","compare","gate","monitor"]],["Where?",["offline","shadow","live"]],["What's judged?",["response","trace","state","outcome"]],["Who judges?",["code","model","human","user"]]];
+let ax=[2,2,0,2,0];
+$("#axesBox").innerHTML=axes.map((a,i)=>`<div class="row" style="margin:6px 0"><b style="min-width:120px">${a[0]}</b>${a[1].map((o,j)=>`<button type="button" class="chip" data-ax="${i}" data-o="${j}">${o}</button>`).join("")}</div>`).join("");
+const axNotes={gate:"Gates need a predeclared threshold and a holdout.",discover:"Discovery evals are small and trace-heavy; don't gate on them.",compare:"Compare versions on the same cases, paired.",monitor:"Monitoring needs cheap graders that run on live traffic."};
+function renderAxes(){$$("#axesBox [data-ax]").forEach(c=>c.classList.toggle("on",ax[c.dataset.ax]==c.dataset.o));const v=ax.map((o,i)=>axes[i][1][o]);$("#axesOut").innerHTML=`An <b>${v[2]}</b> eval of the <b>${v[0]}</b>, run to <b>${v[1]}</b>, judging the <b>${v[3]}</b>, with <b>${v[4]}</b> as the judge. <br><span style="color:var(--muted)">${axNotes[v[1]]}</span>`}
+$$("#axesBox [data-ax]").forEach(c=>c.onclick=()=>{ax[c.dataset.ax]=+c.dataset.o;renderAxes()});renderAxes();
+
+/* ---------- Part 3 ---------- */
+flow("#pipeFlow",[
+ {label:"Request",info:"<b>Component question:</b> was the request parsed correctly (intent, order ID, item)?"},
+ {label:"Retrieval",info:"<b>Component question:</b> did retrieval return the correct, current policy? (See RAG metrics in Part 14.)"},
+ {label:"Reasoning",info:"<b>Component question:</b> did the model form the right plan?"},
+ {label:"Tool",info:"<b>Component question:</b> right tool, right arguments?"},
+ {label:"State",info:"<b>Component question:</b> did the state actually change as intended?"},
+ {label:"Outcome",info:"<b>Component question:</b> is the user's problem actually resolved?"}],{panel:"#pipePanel"});
+$("#e2eBtn").onclick=()=>{$$("#pipeFlow .node").forEach(n=>n.classList.remove("on"));$("#pipePanel").innerHTML="<b>End-to-end:</b> User asked to refund the charger. Expected: only charger refunded. Actual: only charger refunded. <b class='pass'>PASS.</b> This tells you whether the product worked. When it fails, component evals tell you <i>where</i>."};
+
+/* ---------- Part 4 ---------- */
+const nine=[
+ ["Decision","<b>Bad:</b> \"Evaluate my chatbot.\"<br><b>Good:</b> \"Can version B replace version A for refunds under ₹5,000 while maintaining safety and keeping P95 latency below 2.5 s?\"<br>That gives you: <b>candidate</b> (B), <b>baseline</b> (A), <b>population</b> (refunds &lt; ₹5,000), <b>guarded metric</b> (safety), <b>budget</b> (P95 &lt; 2.5 s). Without it you can't pick cases, metrics or thresholds."],
+ ["Users & job","Who uses it and what are they trying to get done? Not an abstract chatbot: \"a customer wants to return an eligible product.\""],
+ ["Success / failure","Break \"good\" into separate criteria: correct, helpful, safe, concise, professional. One compound score hides what failed. Severity is a product decision."],
+ ["Cases","Typical, edge, adversarial, high-impact. Include forbidden behavior. Start with error analysis on real traces."],
+ ["Observation","Decide what you capture: response, trace, state, outcome. Grade the closest observable to the real outcome."],
+ ["Graders","Pick from the evidence ladder: state check, code, reference, LLM judge, human. Validate model judges."],
+ ["Metrics & slices","Rates per slice with intervals; critical failures separate from quality averages."],
+ ["Gate","Predeclare the pass condition before running, e.g. ≥ baseline on correctness, zero critical failures, P95 &lt; 2.5 s."],
+ ["Validate the eval","Does known-good pass? Does the grader agree with experts? Can a human solve each case? Only now choose a framework."]];
+let nineI=0;function renderNine(){flow("#nineFlow",nine.map((s,i)=>({label:(i+1)+" "+s[0],cls:i===nineI?"on":""})));$$("#nineFlow .node").forEach((n,i)=>n.onclick=()=>{nineI=i;renderNine()});$("#ninePanel").innerHTML=`<b>Step ${nineI+1}: ${nine[nineI][0]}.</b> ${nine[nineI][1]}<div class="row" style="margin-top:8px"><button class="btn sm" id="nPrev" type="button">Previous</button><button class="btn sm primary" id="nNext" type="button">Next step</button></div>`;$("#nPrev").onclick=()=>{nineI=Math.max(0,nineI-1);renderNine()};$("#nNext").onclick=()=>{nineI=Math.min(8,nineI+1);renderNine()}}renderNine();
+
+const errs=[["Retrieval freshness",40,"Answered with the archived 14-day policy; current policy is 30 days. The correct doc ranked 4th."],["Wrong tool",25,"Called cancel_order instead of refund_item for a partial refund."],["State mismatch",20,"Said the address was updated; the DB row still has the old address."],["Bad response",10,"Correct action, but the reply was curt and omitted the refund timeline."],["Evaluator issue",5,"Grader marked \"until 8 August\" wrong because the reference said \"within 30 days\"."]];
+$("#errBars").innerHTML=errs.map((e,i)=>`<button type="button" class="doc" data-e="${i}" style="width:100%"><span style="min-width:150px;text-align:left">${e[0]}</span><span style="flex:1"><span class="bar" style="display:block;width:${e[1]*2.2}%;background:${i===4?"var(--flag)":"var(--accent)"}"></span></span><span class="stat">${e[1]}</span></button>`).join("");
+$$("#errBars [data-e]").forEach(b=>b.onclick=()=>{const e=errs[b.dataset.e];$("#errPanel").innerHTML=`<b>${e[0]} (${e[1]}/100).</b> Example note: ${e[2]}`+(b.dataset.e==="4"?" <br>Note: 5% of \"failures\" were the measurement system, not the product.":"")});
+
+/* ---------- Part 5 ---------- */
+const where=[["Database task","Inspect the database row. DB row = actual state. Don't rely on \"the agent said the row was updated.\""],["Document task","Inspect the retrieved evidence and the claims made from it. Is every claim supported?"],["Resolution task","Measure whether the user's actual problem was resolved, not whether the reply was well written."]];
+$("#whereChips").innerHTML=where.map((w,i)=>`<button class="chip ${i?"":"on"}" data-w="${i}" type="button">${w[0]}</button>`).join("");
+$("#wherePanel").innerHTML=where[0][1];chips("#whereChips","w",i=>$("#wherePanel").innerHTML=where[i][1]);
+
+const buckets=[["Typical","What is your return policy?",.96],["Edge","Bought 29 days ago, arrived damaged",.85],["Adversarial","Prompt injection, tool abuse",.72],["High-impact","₹50,000 refund to a different account",.60]];
+function renderBuckets(){const hi=$("#hi").value/100;$("#hiV").textContent=Math.round(hi*100)+"%";const rest=1-hi,sh=[rest*.7,rest*.2,rest*.1,hi];let avg=0;
+ $("#bucketTable").innerHTML="<tr><th>Bucket</th><th>Example</th><th>Share</th><th>Pass rate</th></tr>"+buckets.map((b,i)=>{avg+=sh[i]*b[2];return`<tr><td>${b[0]}</td><td>${b[1]}</td><td class="stat">${pct(sh[i],0)}</td><td class="stat ${b[2]<.75?"fail":""}">${pct(b[2],0)}</td></tr>`}).join("");
+ $("#bucketOut").innerHTML=`Blended headline: <span class="big">${pct(avg)}</span><br>Meanwhile high-impact cases fail <b class="fail">40%</b> of the time. Report risk slices separately, and oversample high-impact cases on purpose.`}
+$("#hi").oninput=renderBuckets;renderBuckets();
+
+const users=[["U1","#2B4C9B"],["U2","#0E7478"],["U3","#9E6C06"],["U4","#BF3E2A"]];
+const lkCases=[];users.forEach((u,ui)=>{for(let j=0;j<3;j++)lkCases.push({u:ui,id:u[0]+String.fromCharCode(97+j)})});
+function lkRender(dev,hold,group){const pill=c=>`<span class="pill" style="background:${users[c.u][1]}">${c.id}</span>`;$("#lkDev").innerHTML=dev.map(pill).join("");$("#lkHold").innerHTML=hold.map(pill).join("");const dU=new Set(dev.map(c=>c.u)),shared=[...new Set(hold.map(c=>c.u))].filter(u=>dU.has(u)).length;
+ $("#lkOut").innerHTML=shared?`<b class="fail">${shared} user${shared>1?"s":""} appear in both sets.</b> Near-duplicate cases leak, so the holdout score is inflated: you're partly re-testing what you tuned on.`:`<b class="pass">No user appears in both sets.</b> The holdout measures generalization to new users. Apply the same idea to documents, repos and time.`}
+$("#lkRandom").onclick=()=>{const s=[...lkCases].sort(()=>Math.random()-.5);lkRender(s.slice(0,8),s.slice(8),false)};
+$("#lkGroup").onclick=()=>{lkRender(lkCases.filter(c=>c.u<3),lkCases.filter(c=>c.u===3),true)};$("#lkRandom").click();
+
+/* ---------- Part 6 ladder ---------- */
+flow("#ladderFlow",[
+ {label:"State",info:"<b>State:</b> check the DB, file system, or environment directly. Did the refund row appear?"},
+ {label:"Code",info:"<b>Code:</b> deterministic checks. Schema valid, tests pass, JSON parses, amount ≤ limit."},
+ {label:"Reference",info:"<b>Reference:</b> compare to a gold answer. Beware: rigid references can punish correct paraphrases."},
+ {label:"LLM judge",info:"<b>LLM judge:</b> for criteria code can't check (tone, faithfulness). Must be validated against human labels."},
+ {label:"Human",info:"<b>Human:</b> expert review. Slow and costly, but the calibration gold standard for subjective criteria."},
+ {label:"Proxy",info:"<b>Proxy:</b> indirect signals like thumbs-up, session length, retries. Useful at scale, weakly connected to correctness."}],{panel:"#ladderPanel",vertical:true});
+
+/* ---------- Part 7 judge lab ---------- */
+let jMode="naive";chips("#w-judge","j",m=>{jMode=m;runJudge()});
+$("#pb").oninput=()=>{$("#pbV").textContent=($("#pb").value/100).toFixed(2)};$("#vb").oninput=()=>{$("#vbV").textContent=($("#vb").value/100).toFixed(2)};
+$("#jRun").onclick=runJudge;
+function runJudge(){const pb=$("#pb").value/100,vb=$("#vb").value/100,N=200;let flips=0,falsePass=0,ties=0,correct=0;
+ const judgeOnce=(firstIsCorrect,v)=>{ // returns true if picks correct
+   let s=1.2 - v*2.2 + (firstIsCorrect?pb*2:-pb*2) + (Math.random()-.5)*1.6; return s>0;};
+ for(let i=0;i<N;i++){const v=jMode==="better"?vb*.15:vb;const r1=judgeOnce(true,v),r2=judgeOnce(false,v);
+   if(r1!==r2)flips++;
+   if(jMode==="naive"){ if(r1)correct++;else falsePass++; }
+   else{ if(r1&&r2)correct++;else if(!r1&&!r2)falsePass++;else ties++; } }
+ $("#jOut").innerHTML=`<div class="card"><h4>Flip rate</h4><div class="big flag">${pct(flips/N)}</div>verdict changes when order swaps</div><div class="card"><h4>False pass</h4><div class="big fail">${pct(falsePass/N)}</div>wrong verbose answer wins</div><div class="card"><h4>${jMode==="naive"?"Correct picks":"Ties flagged"}</h4><div class="big pass">${pct((jMode==="naive"?correct:ties)/N)}</div>${jMode==="naive"?"order 1 only":"sent for review"}</div>`;
+ $("#jNote").innerHTML=jMode==="naive"?"The naive judge only sees order 1, so position bias silently decides close calls and you never see the flip rate. The flip rate is shown here because we ran both orders: it's your estimate of the judge's noise floor.":"The better judge uses a correctness-only rubric (verbosity pull shrinks) and runs both orders. Disagreements become flagged ties instead of silent wins, so position bias can't award a pass. Cost: about 2× judge calls."}
+runJudge();
+
+/* kappa */
+let kMode="lazy";chips("#w-kappa","k",m=>{kMode=m;renderK()});$("#br").oninput=renderK;
+function renderK(){const b=$("#br").value/100;$("#brV").textContent=Math.round(b*100)+"%";const P=Math.round(b*100),F=100-P;
+ let tp,fn,fp,tn; if(kMode==="lazy"){tp=P;fn=0;fp=F;tn=0}else{tp=Math.round(P*.95);fn=P-tp;tn=Math.round(F*.8);fp=F-tn}
+ const po=(tp+tn)/100,jp=(tp+fp)/100,pe=jp*b+(1-jp)*(1-b),kappa=pe>=1?0:(po-pe)/(1-pe);
+ $("#kMatrix").innerHTML=`<table><tr><th></th><th>Expert PASS</th><th>Expert FAIL</th></tr><tr><th>Judge PASS</th><td class="stat pass">${tp}</td><td class="stat fail">${fp} <small>false pass</small></td></tr><tr><th>Judge FAIL</th><td class="stat flag">${fn} <small>false fail</small></td><td class="stat pass">${tn}</td></tr></table>`;
+ $("#kStats").innerHTML=`<div class="stat">Raw agreement: <b>${pct(po)}</b></div><div class="stat">False-pass rate (of true fails): <b class="fail">${F?pct(fp/F):"n/a"}</b></div><div class="stat">False-fail rate (of true passes): <b>${pct(fn/P)}</b></div><div class="stat">Cohen's κ: <b>${kappa.toFixed(2)}</b></div>`;
+ $("#kNote").innerHTML=kMode==="lazy"?`The lazy judge "agrees" ${pct(po,0)} of the time yet catches <b>zero</b> failures. κ = 0 exposes it: its agreement is exactly what chance gives at this base rate.`:`Lower raw agreement can come with a far more useful judge. Always report the false-pass rate: that's how bad outputs reach users.`}
+renderK();
+
+/* ---------- Part 8 ---------- */
+function renderPk(){const p=$("#pkP").value/100,k=+$("#pkK").value;$("#pkPV").textContent=p.toFixed(2);$("#pkKV").textContent=k;$("#pkAt").textContent=pct(1-Math.pow(1-p,k));$("#pkAll").textContent=pct(Math.pow(p,k));
+ const W=560,H=170,bw=W/10;let s=`<svg viewBox="0 0 ${W} ${H+24}" width="100%" role="img" aria-label="pass@k and pass^k for k 1 to 10">`;
+ for(let i=1;i<=10;i++){const a=1-Math.pow(1-p,i),c=Math.pow(p,i),x=(i-1)*bw;s+=`<rect x="${x+6}" y="${H-a*H}" width="${bw/2-7}" height="${a*H}" fill="var(--pass)" opacity="${i===k?1:.45}"/><rect x="${x+bw/2+1}" y="${H-c*H}" width="${bw/2-7}" height="${c*H}" fill="var(--fail)" opacity="${i===k?1:.45}"/><text x="${x+bw/2}" y="${H+16}" text-anchor="middle" font-size="12" fill="var(--muted)">k=${i}</text>`}
+ $("#pkChart").innerHTML=s+`</svg><div class="stat" style="color:var(--muted)"><span class="pass">■</span> pass@k rises with k &nbsp; <span class="fail">■</span> pass^k falls with k</div>`}
+$("#pkP").oninput=renderPk;$("#pkK").oninput=renderPk;renderPk();
+
+function renderCI(){const n=+$("#ciN").value,p=$("#ciP").value/100,k=Math.round(p*n);$("#ciNV").textContent=n;$("#ciPV").textContent=Math.round(p*100)+"%";const[lo,hi]=wilson(k,n);
+ $("#ciViz").innerHTML=`<svg viewBox="0 0 560 50" width="100%" role="img" aria-label="interval"><line x1="10" y1="25" x2="550" y2="25" stroke="var(--line)" stroke-width="2"/><rect x="${10+lo*540}" y="14" width="${Math.max(2,(hi-lo)*540)}" height="22" rx="4" fill="var(--accent)" opacity=".3"/><circle cx="${10+(k/n)*540}" cy="25" r="6" fill="var(--accent)"/><text x="10" y="48" font-size="11" fill="var(--muted)">0%</text><text x="530" y="48" font-size="11" fill="var(--muted)">100%</text></svg>`;
+ const ro3=k===n?`<br>Zero failures observed: rule of three puts the failure rate below <b>${pct(3/n,2)}</b> with 95% confidence, and no lower.`:"";
+ $("#ciOut").innerHTML=`${k}/${n} passed. 95% Wilson interval: <b>${pct(lo)} – ${pct(hi)}</b> (width ${pct(hi-lo)}).${ro3}<br><span style="color:var(--muted)">If version B scores inside A's interval, you haven't shown B is better. Compare paired, on the same cases.</span>`}
+$("#ciN").oninput=renderCI;$("#ciP").oninput=renderCI;renderCI();
+
+const sevItems=[["Typo in reply",10,"low"],["Refund to wrong account",1,"critical"]];
+chips("#w-sev","s",m=>renderSev(m));function renderSev(m){if(m==="avg")$("#sevOut").innerHTML=`100 trials, 11 failures. <span class="big">89%</span> quality score. Looks shippable.<br><span style="color:var(--muted)">The one wrong-account refund is diluted into the same number as ten typos.</span>`;
+ else $("#sevOut").innerHTML=`<div class="tw"><table><tr><th>Failure</th><th>Count</th><th>Severity</th><th>Gate</th></tr><tr><td>Typo in reply</td><td>10</td><td>Low</td><td class="pass">Quality 90%: within budget</td></tr><tr><td>Refund to wrong account</td><td>1</td><td class="fail">Critical</td><td class="fail">Critical rate must be 0: BLOCK</td></tr></table></div>`}renderSev("avg");
+
+/* ---------- Part 9 ---------- */
+flow("#chainFlow",["Spec","Case","Harness","Context","Model","Tool","State","Response","Grader","Decision"].map(l=>({label:l})));
+const meas=[["Can a competent human solve this case with the information provided?","If no: the case may be broken (missing info, ambiguous spec)."],["Does a known-good solution pass the exact harness?","If no: the harness may be broken. Stop: the product isn't the suspect."],["Does the grader agree with experts on held-out examples?","If no: the grader may be broken. Fix the instrument first."]];
+let measA=[null,null,null];
+function renderMeas(){$("#measBox").innerHTML=meas.map((m,i)=>`<div class="dbg-step"><span class="q">${i+1}. ${m[0]}</span><button class="btn sm ${measA[i]===true?"primary":""}" data-m="${i}" data-v="1" type="button">Yes</button><button class="btn sm ${measA[i]===false?"primary":""}" data-m="${i}" data-v="0" type="button">No</button></div>`).join("");
+ $$("#measBox [data-m]").forEach(b=>b.onclick=()=>{measA[b.dataset.m]=b.dataset.v==="1";renderMeas()});
+ const firstNo=measA.findIndex(a=>a===false);
+ $("#measOut").innerHTML=firstNo>=0?`<b class="fail">Stop.</b> ${meas[firstNo][1]}`:(measA.every(a=>a===true)?`<b class="pass">Measurement looks sound.</b> Now debug the product from the first divergence.`:"Answer each question.")}
+renderMeas();
+
+const dbgQs=["Did the information exist?","Was it retrieved?","Was the correct, current version retrieved intact?","Did the model make the right plan?","Did it select the right tool?","Were the arguments correct?","Did the tool execute?","Did state change as intended?","Was the final response truthful?"];
+const scen=[
+ {name:"Charger refund",fail:6,out:"<b>First divergence: tool execution.</b> The tool timed out. Don't rewrite the prompt. Investigate timeouts, retries and error handling. Also note the response claimed success: add a case that forbids claiming success after a tool error."},
+ {name:"Policy answer wrong",fail:2,out:"<b>First divergence: retrieval returned the archived policy.</b> This looks like hallucination but isn't. Investigate ranking, freshness filters and index hygiene, not model accuracy."},
+ {name:"Cancelled instead of refunded",fail:4,out:"<b>First divergence: tool selection.</b> Check tool names and descriptions, overlapping tools, and routing. Add paired cases: partial refund vs full cancellation."},
+ {name:"Unanswerable question",fail:0,out:"<b>First divergence: the information never existed.</b> No model can fix this. Fix the knowledge base or spec, or change the expected behavior to \"say you don't know\". Also check the case itself (measurement-first question 1)."}];
+let sc=0,dbgPos=0;
+$("#dbgChips").innerHTML=scen.map((s,i)=>`<button class="chip ${i?"":"on"}" type="button" data-d="${i}">${s.name}</button>`).join("");
+chips("#dbgChips","d",i=>{sc=+i;dbgPos=0;renderDbg()});
+function renderDbg(){const s=scen[sc];$("#dbgSteps").innerHTML=dbgQs.map((q,i)=>{let tag='<span class="tag u">not checked</span>';if(i<dbgPos)tag=i===s.fail?'<span class="tag n">NO</span>':'<span class="tag y">YES</span>';const btn=i===dbgPos&&dbgPos<=s.fail?`<button class="btn sm primary" id="dbgCheck" type="button">Check</button>`:"";return`<div class="dbg-step"><span class="stat" style="color:var(--muted)">${i+1}</span><span class="q">${q}</span>${tag}${btn}</div>`}).join("");
+ $("#dbgOut").innerHTML=dbgPos>s.fail?s.out:"Check each step in order. Stop at the first NO.";const c=$("#dbgCheck");if(c)c.onclick=()=>{dbgPos++;renderDbg()}}
+renderDbg();
+
+const causes={ret:["Retrieval",{ev:1,tool:0,model:0}],tool:["Tool / execution",{ev:0,tool:1,model:0}],cap:["Model capability",{ev:0,tool:0,model:1}],scaf:["Scaffold, spec, case or grader",{ev:0,tool:0,model:0}]};
+const probeName={ev:"Perfect evidence injected",tool:"Perfect tool result injected",model:"Stronger model swapped in"};
+let hidden,oRuns=[];
+function newMystery(){const k=Object.keys(causes);hidden=k[Math.floor(Math.random()*k.length)];oRuns=[];$("#oLog").textContent="No probes run.";$("#oVerdict").hidden=true;
+ $("#oGuess").innerHTML="<b>Your call:</b> "+Object.entries(causes).map(([k,v])=>`<button class="chip" type="button" data-g="${k}">${v[0]}</button>`).join("");
+ $$("#oGuess [data-g]").forEach(b=>b.onclick=()=>{const ok=b.dataset.g===hidden,v=$("#oVerdict");v.hidden=false;v.innerHTML=(ok?`<b class="pass">Correct.</b> `:`<b class="fail">Not this time.</b> It was <b>${causes[hidden][0]}</b>. `)+"Read the probe log: a probe that makes the failure disappear implicates the part it perfected. If nothing helps, go back to measurement-first: the case, harness or grader may be the problem."})}
+$$("#w-oracle [data-o]").forEach(b=>b.onclick=()=>{const r=causes[hidden][1][b.dataset.o];oRuns.push(`${probeName[b.dataset.o]}: <b class="${r?"pass":"fail"}">${r?"agent succeeds":"still fails"}</b>`);$("#oLog").innerHTML=oRuns.join("<br>")});
+$("#oNew").onclick=newMystery;newMystery();
+
+flow("#outFlow",["Exact failure","Failure class","Paired negative","Regression case","Safety check","Cost check"].map(l=>({label:l})));
+
+/* ---------- Part 10 ---------- */
+const pats=[
+ ["The polished agent","Agent: \"Your ₹1,249 refund has been processed.\"","Tool timed out. Database unchanged. The sentence is perfect; the world is wrong.","Grade the world, not the sentence about the world."],
+ ["The eval was wrong","Reference: \"within 30 days\". System: \"until 8 August\".","The concrete date is correct and more useful. Exact match marks it FAIL.","Your eval can punish an improvement. Rigid references are dangerous."],
+ ["Retrieval disguised as hallucination","Wrong return window in the answer. \"The model hallucinated.\"","Retrieval returned archived policy Y instead of current policy X. The model faithfully used what it got.","Investigate retrieval, ranking, freshness and context before \"make the model more accurate\"."],
+ ["The verbose winner","Eval score rises after a prompt change.","The judge rewards long, polished answers over correct, concise ones. Users get less satisfied.","A bad judge can make a worse product look better."]];
+$("#patBox").innerHTML=pats.map((p,i)=>`<div class="card" style="margin:8px 0"><h4>${p[0]}</h4><div>${esc(p[1])}</div><button class="btn sm" data-p="${i}" type="button" style="margin-top:6px">Reveal what really happened</button><div id="pat${i}" hidden style="margin-top:6px"><div class="fail">${esc(p[2])}</div><div style="margin-top:4px"><b>Lesson:</b> ${esc(p[3])}</div></div></div>`).join("");
+$$("#patBox [data-p]").forEach(b=>b.onclick=()=>{$("#pat"+b.dataset.p).hidden=false;b.remove()});
+
+/* ---------- Part 11 ---------- */
+flow("#fixLadder",[{label:"Context / retrieval"},{label:"Rule in code / spec"},{label:"Stronger or routed model"},{label:"Fine-tuning"}]);
+const fixQs=[
+ ["The needed policy was never in the model's context.",0,"Missing information → fix context/retrieval. A bigger model can't use information it never saw."],
+ ["Refunds above ₹10,000 must always require approval, and the model sometimes forgets.",1,"Deterministic requirement → enforce in code or the spec. Don't rely on the prompt for hard rules."],
+ ["All oracle probes pass except the stronger model, which fixes it.",2,"Evidence of a capability ceiling → try a stronger or routed model."],
+ ["A stable, recurring formatting failure with thousands of good labeled examples.",3,"Stable recurring failure + good labels → consider fine-tuning, the most expensive and brittle option."]];
+const fixOpts=["Context / retrieval","Code / spec rule","Stronger model","Fine-tuning"];
+$("#fixQ").innerHTML=fixQs.map((q,i)=>`<div style="margin:10px 0"><b>${i+1}.</b> ${q[0]}<div class="row" style="margin-top:4px">${fixOpts.map((o,j)=>`<button class="chip" type="button" data-fq="${i}" data-fo="${j}">${o}</button>`).join("")}</div><div class="panel" id="fq${i}" hidden></div></div>`).join("");
+$$("#fixQ [data-fq]").forEach(b=>b.onclick=()=>{const q=fixQs[b.dataset.fq],ok=+b.dataset.fo===q[1],p=$("#fq"+b.dataset.fq);p.hidden=false;p.innerHTML=`<b class="${ok?"pass":"fail"}">${ok?"Right.":"Not quite."}</b> ${q[2]}`});
+
+const patches=["If the user mentions a charger, refund only the charger.","Never refund the whole order unless asked.","If the user says 'whole order', refund everything.","Always ask before refunding.","Don't ask unnecessary questions; act quickly.","If the item is missing, refund immediately.","Check eligibility before any refund.","Refund within 30 days only.","Damaged items can be refunded after 30 days.","Keep replies under 40 words.","Always explain the refund policy in detail."];
+let mole=[];function renderMole(msg){$("#molePrompt").textContent=(mole.length?mole.map((m,i)=>`${i+1}. ${m}`).join("\n"):"You are a helpful refund agent.")+(msg?"\n\n"+msg:"");const contra=mole.length>=5?Math.floor((mole.length-3)/2):0;$("#moleStats").innerHTML=`Instructions: <b>${mole.length}</b> &nbsp; Contradictions: <b class="${contra?"fail":""}">${contra}</b> &nbsp; New failures introduced: <b class="${contra?"fail":""}">${Math.max(0,contra*2-1)}</b>`}
+$("#molePatch").onclick=()=>{if(mole.length<patches.length)mole.push(patches[mole.length]);renderMole()};
+$("#moleClass").onclick=()=>{mole=[];renderMole("Failure class: partial-refund scope.\nFix: refund_item(order, line_item) enforced in code;\n  eligibility checked by a policy function;\n  one general instruction: 'Refund only the items the user names.'\nAdded regression + paired negative cases.")};renderMole();
+
+/* ---------- Part 12/13 ---------- */
+flow("#flyFlow",[
+ {label:"Development",info:"Build or change the system."},{label:"Eval",info:"Run the offline suite, including regression cases."},{label:"Fix",info:"Fix the earliest layer that explains the failure."},{label:"Gate",info:"Predeclared pass condition decides whether to proceed."},{label:"Canary",info:"Serve a small slice of real traffic with rollback ready."},{label:"Production",info:"Monitor with cheap online graders and user signals."},{label:"Incident",cls:"bad",info:"Something breaks in the wild."},{label:"New test case",cls:"good",info:"The incident becomes a regression case, generalized to its failure class, with a paired negative."}],{panel:"#flyPanel",loop:"back to Eval"});
+flow("#masterFlow",["Decision","Cases","Evidence","Grader","Uncertainty","Diagnosis","Rerun"].map(l=>({label:l})));
+const master={RAG:["Retrieval + answer cases","Retrieved evidence + claims","Faithfulness, recall@k","Groundedness rate"],Agents:["Agent scenarios","Trace + state","State check","Task success, pass^k"],"Coding agents":["Coding tasks","Repo changes, test results","Unit/hidden tests","Pass rate, pass@k"],Safety:["Adversarial cases","Behavior","Safety grader","Violation rate"]};
+$("#masterChips").innerHTML=Object.keys(master).map((k,i)=>`<button class="chip ${i?"":"on"}" type="button" data-ms="${k}">${k}</button>`).join("");
+function renderMaster(k){const m=master[k];$("#masterTable").innerHTML=`<tr><th>Slot</th><th>${k}</th></tr><tr><td>Decision</td><td>Ship / block this version?</td></tr><tr><td>Cases</td><td>${m[0]}</td></tr><tr><td>Evidence</td><td>${m[1]}</td></tr><tr><td>Grader</td><td>${m[2]}</td></tr><tr><td>Metric</td><td>${m[3]} with intervals</td></tr>`}
+chips("#masterChips","ms",renderMaster);renderMaster("RAG");
+flow("#finalFlow",["Decision","Cases","Run system","Trace","Evidence","Grader","Metric","Uncertainty","Gate","Failure","Diagnosis","Fix","Regression","Rerun"].map(l=>({label:l})));
+
+/* ---------- RAG calc ---------- */
+const docs=[["Refund policy v3.2 (current)",true],["Shipping FAQ",false],["Partial refund guide",true],["Refund policy v2.0 (archived)",false],["Missing-item procedure",true],["Careers page",false]];
+function renderRag(){const k=+$("#ragK").value;$("#ragKV").textContent=k;$("#ragDocs").innerHTML=docs.map((d,i)=>`<button type="button" class="doc ${d[1]?"rel":""} ${i>=k?"cut":""}" data-rd="${i}" style="width:100%"><span class="stat">#${i+1}</span><span style="flex:1;text-align:left">${d[0]}</span><span class="tag ${d[1]?"y":"u"}">${d[1]?"relevant":"not relevant"}</span></button>`).join("");
+ $$("#ragDocs [data-rd]").forEach(b=>b.onclick=()=>{docs[b.dataset.rd][1]=!docs[b.dataset.rd][1];renderRag()});
+ const top=docs.slice(0,k),rel=top.filter(d=>d[1]).length,first=docs.findIndex(d=>d[1]);
+ $("#ragOut").innerHTML=`<div class="card"><h4>Precision@${k}</h4><div class="big">${(rel/k).toFixed(2)}</div>${rel}/${k}</div><div class="card"><h4>Recall@${k}</h4><div class="big">${Math.min(1,rel/3).toFixed(2)}</div>${rel}/3 relevant found</div><div class="card"><h4>MRR</h4><div class="big">${first<0?"0.00":(1/(first+1)).toFixed(2)}</div>first relevant at rank ${first<0?"none":first+1}</div>`}
+$("#ragK").oninput=renderRag;renderRag();
+
+/* ---------- Glossary ---------- */
+const G=[
+["Eval","A repeatable procedure that runs defined cases, observes behavior/outcomes, judges them against explicit criteria, aggregates results, and supports a decision."],
+["Case","A reproducible situation being tested: input, initial state, expected behavior, forbidden behavior, severity, slices."],
+["Trial","One execution of a case. Stochastic systems can pass one trial and fail the next."],
+["Trace","The record of what happened during a trial: retrieval, model calls, tool calls, results, state changes, response."],
+["Holdout","Evidence deliberately left unused during development, kept for a final unbiased check."],
+["Criterion","What 'good' means for one aspect, written explicitly."],
+["Grader","How a single trial is judged against a criterion (state check, code, reference, LLM judge, human)."],
+["Metric","How results across many trials are summarized: a rate, mean, percentile or interval."],
+["Gate","A predeclared condition that must hold for a decision such as shipping."],
+["Regression case","A past failure preserved as a permanent test so it can't silently recur."],
+["Oracle probe","A controlled experiment that makes one component artificially perfect to locate a failure."],
+["Slice","A subset of cases (e.g. high-value, adversarial) reported separately so averages don't hide it."],
+["Claim boundary","A result extends only as far as the cases, environment, grader and sampling behind it."],
+["Negative space","Forbidden behaviors a case explicitly checks for, treated as first-class."],
+["Error analysis","Reading ~100 traces, noting, clustering and counting failures into a taxonomy before automating."],
+["End-to-end eval","Checks whether the whole product achieved the real outcome. The source of truth."],
+["Component eval","Checks one stage (retrieval, tool choice, arguments). A diagnostic proxy until shown to track end-to-end."],
+["Model benchmark","Layer 1: compares base models for selection."],
+["Application eval","Layer 2: tests your actual system: prompts, retrieval, tools, policies, orchestration, model."],
+["Online evidence","Layer 3: real-user evidence from canary, A/B tests and monitoring."],
+["Guardrail","A runtime mechanism that intervenes to stop or change an action. Not an eval."],
+["Evidence ladder","State → code → reference → LLM judge → human → proxy, ordered by how directly and deterministically they observe the outcome."],
+["LLM-as-judge","Using a model to grade outputs. A measurement instrument with noise and bias that must be validated."],
+["Position bias","A judge preferring an answer because of where it appears. Detected by swapping order."],
+["Flip rate","Share of pairs whose verdict changes when order is swapped. Estimates judge noise."],
+["Verbosity bias","A judge preferring longer, more polished answers regardless of correctness."],
+["Self-preference bias","A judge favoring outputs from its own model family."],
+["False-pass rate","Share of truly failing outputs the grader marks PASS. The dangerous error."],
+["False-fail rate","Share of truly passing outputs the grader marks FAIL."],
+["Cohen's kappa","Chance-corrected agreement between two raters: (observed − expected) / (1 − expected)."],
+["pass@k","Probability at least one of k attempts succeeds: 1 − (1 − p)^k."],
+["pass^k","Probability all k attempts succeed: p^k. Measures consistency."],
+["Confidence interval","A range of plausible true values given the sample. Wilson interval is standard for pass rates."],
+["Rule of three","Zero failures in n trials → 95% upper bound on failure rate ≈ 3/n."],
+["Paired comparison","Comparing two versions on the same cases, case by case (McNemar test, paired bootstrap)."],
+["Severity","How bad a failure is. A product decision; critical failures are tracked separately from averages."],
+["Learning regime","30–100 cases to discover failure modes by reading traces."],
+["Claiming regime","Large, structured evidence needed to support rare-event claims."],
+["Dataset leakage","Near-duplicate or related cases in both dev and holdout (by user, document, repo, time), inflating scores."],
+["Contamination","Eval items present in a model's training data, inflating benchmark results."],
+["First divergence","The earliest step in the chain where the answer is NO. Debug there."],
+["Measurement first","Before blaming the product: can a human solve the case, does known-good pass the harness, does the grader match experts?"],
+["Paired negative","The dual test of a fix: if you fix 'refund eligible', also test 'don't refund ineligible'."],
+["Rerun outward","Exact failure → failure class → paired negative → regression case → safety check → cost check."],
+["Prompt whack-a-mole","Adding one instruction per failing case until the prompt is huge and contradictory. Prompt overfitting."],
+["Eval flywheel","Develop → eval → fix → gate → canary → production → incident → new case → eval."],
+["Eval decay","An eval losing validity through broken cases, contamination, drift, or metric disconnection."],
+["Goodhart's law","When a measure becomes a target, it ceases to be a good measure."],
+["Criteria drift","Graders' definition of good shifting as they see more outputs."],
+["Precision@k","Relevant documents in the top k ÷ k."],
+["Recall@k","Relevant documents in the top k ÷ all relevant documents."],
+["MRR","Mean reciprocal rank: average of 1 ÷ rank of the first relevant result."],
+["nDCG","Ranking metric that rewards relevant results appearing higher, supports graded relevance."],
+["Faithfulness","Every claim in the answer is supported by the retrieved context (groundedness)."],
+["Trajectory eval","Judging the path an agent took: required steps present, forbidden steps absent."],
+["Pointwise vs pairwise","Pointwise scores one output on a rubric; pairwise compares two outputs."],
+["Shadow deployment","New version runs on live traffic with outputs logged but not shown to users."],
+["Canary","New version serves a small slice of real users with rollback ready."],
+["A/B test","Randomized comparison of versions on live users with a pre-registered metric."],
+["Guardrail metric","A metric that must not regress (safety, latency, cost) while optimizing the primary one."],
+["Exact match / BLEU / ROUGE","Reference-overlap metrics; cheap but punish valid paraphrases and ignore correctness."]];
+function renderGl(q){q=(q||"").toLowerCase();$("#glList").innerHTML=G.filter(g=>!q||g[0].toLowerCase().includes(q)||g[1].toLowerCase().includes(q)).map(g=>`<div class="gl-item"><b>${esc(g[0])}</b>${esc(g[1])}</div>`).join("")||"<p>No term matches. Try a shorter word.</p>"}
+$("#glSearch").oninput=e=>renderGl(e.target.value);renderGl();
+
+/* ---------- Flashcards ---------- */
+let deck=G.map((_,i)=>i),fi=0;
+function renderFc(){const g=G[deck[fi]];$("#fc").classList.remove("flip");$("#fcTerm").textContent=g[0];$("#fcDef").textContent=g[1];$("#fcPos").textContent=`${fi+1}/${deck.length}`}
+const flip=()=>$("#fc").classList.toggle("flip");$("#fc").onclick=flip;$("#fc").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();flip()}};
+$("#fcNext").onclick=()=>{fi=(fi+1)%deck.length;renderFc()};$("#fcPrev").onclick=()=>{fi=(fi-1+deck.length)%deck.length;renderFc()};
+$("#fcShuffle").onclick=()=>{deck.sort(()=>Math.random()-.5);fi=0;renderFc()};renderFc();
+
+/* ---------- Quiz ---------- */
+const Q=[
+["Your agent says \"refund processed\" but you're not sure it happened. What should the grader check?",["The response text with an LLM judge","The database state for the refund row","User satisfaction score","Response length"],1,"Grade the closest observable to the real outcome. DB state is the truth; narration can be false."],
+["A per-trial success rate is 0.75. What is pass^3?",["98.4%","75%","42.2%","56.3%"],2,"pass^3 = p³ = 0.75³ ≈ 42.2%. pass@3 would be 98.4%."],
+["Which metric fits a customer-support agent where every conversation must work?",["pass@k","pass^k","BLEU","Perplexity"],1,"pass^k measures consistency across attempts."],
+["An always-PASS judge shows 90% agreement with experts. What exposes it?",["Higher raw agreement","Cohen's κ ≈ 0 and a 100% false-pass rate","Running it twice","Using a longer rubric"],1,"At a 90% PASS base rate, chance agreement is 90%. κ corrects for that."],
+["Your known-good reference solution fails in the harness. What next?",["Rewrite the prompt","Try a bigger model","Stop: the harness is suspect, not the product","Add more cases"],2,"Measurement first. If known-good fails, the product isn't the suspect."],
+["Injecting perfect evidence makes the agent succeed. What's implicated?",["Tool execution","Retrieval","Model capability","The grader"],1,"The probe that fixes the failure implicates the part it perfected."],
+["What does the claim boundary say?",["Metrics are objective","A result extends only as far as the evidence behind it","Bigger datasets remove bias","Averages are enough"],1,"Claims are limited by cases, environment, grader and sampling."],
+["Why report high-impact cases as a separate slice?",["They are easier to grade","Blended averages hide dangerous tails","They are more common","Frameworks require it"],1,"A comfortable average can hide a 40% failure rate on the cases that matter most."],
+["What's the first step of the 9-step design loop?",["Pick a framework","Write graders","Define the decision","Collect 1,000 cases"],2,"Decision first. Framework choice comes last."],
+["You observe 0 failures in 300 trials. The 95% upper bound on failure rate is about:",["0%","0.1%","1%","3%"],2,"Rule of three: 3/300 = 1%."],
+["The model 'hallucinated' an old return window. The archived policy was retrieved. Where do you fix?",["Swap to a bigger model","Retrieval ranking / freshness","Add 'be accurate' to the prompt","Fine-tune"],1,"The correct evidence never reached the model. Fix the earliest layer."],
+["What does a guardrail do that an eval does not?",["Measures","Intervenes at runtime","Aggregates","Uses holdouts"],1,"A guardrail stops actions; an eval measures whether they happened correctly."],
+["Why can a random row split leak?",["Rows are too long","Near-duplicate cases from the same user/doc land in both dev and holdout","It uses too few rows","It ignores severity"],1,"Split by user, document, repo or time."],
+["Which is the better judge design?",["Pick A or B, no ties","Correctness-only atomic rubric, ties allowed, both orders","Ask for a 1–10 score","Let the judge define quality"],1,"This removes position bias by construction at ~2× cost."],
+["Precision@3 when 2 of the top 3 results are relevant:",["0.33","0.50","0.67","1.00"],2,"2 ÷ 3 ≈ 0.67."],
+["Which is Goodhart's law?",["More data beats better models","When a measure becomes a target, it stops being a good measure","Averages hide tails","Every fix has a dual failure"],1,"Defend with holdouts, refreshed cases and human audits."],
+["Version B scores 93% vs A's 91% on 100 cases. Is B better?",["Yes, clearly","Not shown: intervals overlap; compare paired on the same cases","Only if B is newer","Yes, if the judge agrees"],1,"±~5 points of uncertainty at n=100. Use paired tests (McNemar / bootstrap)."],
+["An incident happened in production. Best response for the eval suite?",["Nothing, it's fixed","Add the exact case only","Add a case for the failure class plus a paired negative","Delete old cases"],2,"Test the class, not merely the anecdote."]];
+let qa={};
+function renderQuiz(){$("#qBox").innerHTML=Q.map((q,i)=>`<div class="widget"><p class="wt">${i+1}. ${esc(q[0])}</p>${q[1].map((o,j)=>{let c="";if(qa[i]!==undefined){if(j===q[2])c="right";else if(j===qa[i])c="wrong"}return`<button type="button" class="qopt ${c}" data-q="${i}" data-a="${j}" ${qa[i]!==undefined?"disabled":""}>${esc(o)}</button>`}).join("")}${qa[i]!==undefined?`<div class="panel"><b class="${qa[i]===q[2]?"pass":"fail"}">${qa[i]===q[2]?"Correct.":"Not quite."}</b> ${esc(q[3])}</div>`:""}</div>`).join("");
+ $$("#qBox [data-q]").forEach(b=>b.onclick=()=>{qa[b.dataset.q]=+b.dataset.a;renderQuiz()});
+ const ans=Object.keys(qa).length,right=Object.entries(qa).filter(([i,a])=>Q[i][2]===a).length;
+ $("#qScore").innerHTML=`Score: <b>${right}/${ans}</b> answered of ${Q.length} `+(ans?`<button class="btn sm" id="qReset" type="button">Retake</button>`:"");const r=$("#qReset");if(r)r.onclick=()=>{qa={};renderQuiz()}}
+renderQuiz();
+})();
+</script>
+</body>
+</html>
